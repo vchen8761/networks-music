@@ -111,7 +111,34 @@ int main (int argc, char *argv[])
 	{
 		if (strcmp(command, "logon") == 0)
 		{
+			// Initialize credentials
+			char* username = (char*) malloc(BUFFSIZE);
+			char* password = (char*) malloc(BUFFSIZE);
+			char credentials[BUFFSIZE];	
+				
+			// Parse credentials input
+			cout << "Enter your username: " << endl;
+			scanf("%s", username);	
+			cout << "Enter your password: " << endl;
+			scanf("%s", password);
 
+			// Do hashing and salting to username and password?
+
+			// Move username and password to credentials buffer 
+			strncpy(credentials, username, BUFFSIZE);
+			strncat(credentials, password, BUFFSIZE - strlen(username));
+		
+			// Free memory	
+			free(username);
+			free(password);
+
+			// Print for testing
+			printf("%s\n",credentials);
+			fflush(stdout);
+			
+			// Switch commands
+			cout << "Enter Command in Small Case: " << endl;
+			scanf("%s", command);
 		}
 		else if (strcmp(command, "list") == 0)
 		{
