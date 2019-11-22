@@ -3,11 +3,6 @@
 
 using namespace std;
 
-struct logon_info {
-	char username[SHORT_BUFFSIZE];
-	char password[65];
-};
-
 static void hash_to_string(char string[65], const uint8_t hash[32])
 {
 	size_t i;
@@ -126,26 +121,26 @@ int main (int argc, char *argv[])
 		if (strcmp(command, "logon") == 0)
 		{
 			// Initialize logon info
-			struct logon_info credentials;
+			char username[SHORT_BUFFSIZE];
+			char hashed_password[65];
 			char password[SHORT_BUFFSIZE];
 			uint8_t hash[32];
-		
 			// Clear new line from using scanf	
 			getchar();
 
 			// Parse credentials input
 		 	printf("Enter your username: ");
-			fgets(credentials.username, SHORT_BUFFSIZE, stdin);
+			fgets(username, SHORT_BUFFSIZE, stdin);
 			printf("Enter your password: ");
 			fgets(password, SHORT_BUFFSIZE, stdin);
 
 			// Hash the password
 			calc_sha_256(hash, password, strlen(password));
-			hash_to_string(credentials.password, hash);
+			hash_to_string(hashed_password, hash);
 
 			// Print out credentials for testing
-			printf("%s", credentials.username);
-			printf("%s\n", credentials.password);
+			printf("%s", username);
+			printf("%s\n", hashed_password);
 			fflush(stdout);
 			
 			// Switch commands
