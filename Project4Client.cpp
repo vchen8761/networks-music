@@ -1,6 +1,20 @@
 #include "NetworkHeader.h"
+#include "sha-256.c"
 
 using namespace std;
+
+struct logon_info {
+	char username[SHORT_BUFFSIZE];
+	uint8_t password[32];
+};
+
+static void hash_to_string(char string[65], const uint8_t hash[32])
+{
+	size_t i;
+	for (i = 0; i < 32; i++) {
+		string += sprintf(string,"%02x", hash[i]);
+	}
+}	
 
 // Constructs and sends LEAVE message to server.
 void sendLEAVE(int sock)
@@ -111,29 +125,23 @@ int main (int argc, char *argv[])
 	{
 		if (strcmp(command, "logon") == 0)
 		{
-			// Initialize credentials
-			char* username = (char*) malloc(BUFFSIZE);
-			char* password = (char*) malloc(BUFFSIZE);
-			char credentials[BUFFSIZE];	
-				
+			// Initialize logon info
+			struct logon_info credentials;
+			char password[SHORT_BUFFSIZE];
+			char hash_string[65];
+
+			getchar();
 			// Parse credentials input
-			cout << "Enter your username: " << endl;
-			scanf("%s", username);	
-			cout << "Enter your password: " << endl;
-			scanf("%s", password);
+		 	printf("Enter your username: ");
+			fgets(credentials.username, SHORT_BUFFSIZE, stdin);
+			printf("Enter your password: ");
+			fgets(password, SHORT_BUFFSIZE, stdin);
 
-			// Do hashing and salting to username and password?
+			calc_sha_256(credentials.password, password, strlen(password));
+			hash_to_string(hash_string, credentials.password);
 
-			// Move username and password to credentials buffer 
-			strncpy(credentials, username, BUFFSIZE);
-			strncat(credentials, password, BUFFSIZE - strlen(username));
-		
-			// Free memory	
-			free(username);
-			free(password);
-
-			// Print for testing
-			printf("%s\n",credentials);
+			printf("%s", credentials.username);
+			printf("%s\n", hash_string);
 			fflush(stdout);
 			
 			// Switch commands
