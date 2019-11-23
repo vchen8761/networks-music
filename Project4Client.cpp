@@ -1,5 +1,6 @@
 #include "NetworkHeader.h"
 #include "sha-256.c"
+#include <time.h>
 
 using namespace std;
 
@@ -125,6 +126,15 @@ int main (int argc, char *argv[])
 			char hashed_password[65];
 			char password[SHORT_BUFFSIZE];
 			uint8_t hash[32];
+
+			// Generate salt for password
+			time_t sysTime;
+		 	time(&sysTime);
+			char* salt = ctime(&sysTime);
+			char saltArray[SHORT_BUFFSIZE];
+			strncpy(saltArray, salt, sizeof(saltArray));
+			printf("%s", saltArray);
+
 			// Clear new line from using scanf	
 			getchar();
 
@@ -133,8 +143,16 @@ int main (int argc, char *argv[])
 			fgets(username, SHORT_BUFFSIZE, stdin);
 			printf("Enter your password: ");
 			fgets(password, SHORT_BUFFSIZE, stdin);
+			// Remove new line from fgets input
+			password[strlen(password)-1] = '\0';
+			
+			//Concatenate password and salt
+			strncat(password, saltArray, SHORT_BUFFSIZE - strlen(password));
+			// Print out salted password for testing
+			printf("%s", password);
+			fflush(stdout);
 
-			// Hash the password
+			// Hash the salted password
 			calc_sha_256(hash, password, strlen(password));
 			hash_to_string(hashed_password, hash);
 
@@ -142,7 +160,9 @@ int main (int argc, char *argv[])
 			printf("%s", username);
 			printf("%s\n", hashed_password);
 			fflush(stdout);
+		
 			
+
 			// Switch commands
 			cout << "Enter Command in Small Case: " << endl;
 			scanf("%s", command);
