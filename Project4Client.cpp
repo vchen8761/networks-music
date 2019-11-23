@@ -31,6 +31,66 @@ void sendLEAVE(int sock)
 	
 }
 
+void sendLOGON(int sock)
+{
+	// Initialize logon info
+	char username[SHORT_BUFFSIZE];
+	char hashed_password[65];
+	char password[SHORT_BUFFSIZE];
+	uint8_t hash[32];
+
+	// Generate salt for password
+	time_t sysTime;
+ 	time(&sysTime);
+	char* salt = ctime(&sysTime);
+	char saltArray[SHORT_BUFFSIZE];
+	strncpy(saltArray, salt, sizeof(saltArray));
+
+	// Clear new line from using scanf	
+	getchar();
+
+	// Parse username input
+ 	printf("Enter your username: ");
+	fgets(username, SHORT_BUFFSIZE, stdin);
+	// Remove new line from fgets input
+	username[strlen(username)-1] = '\0';
+
+	// Parse password input
+	printf("Enter your password: ");
+	fgets(password, SHORT_BUFFSIZE, stdin);
+	// Remove new line from fgets input
+	password[strlen(password)-1] = '\0';
+	
+	//Concatenate password and salt
+	strncat(password, saltArray, SHORT_BUFFSIZE - strlen(password));
+	// Print out salted password for testing
+
+	// Hash the salted password
+	calc_sha_256(hash, password, strlen(password));
+	hash_to_string(hashed_password, hash);
+
+	// Construct buffer with command, username, hashed_password, and salt
+	// (seperated by @)
+	char logon_info[BUFFSIZE];
+	strncat(logon_info, "LOGON", 6);
+	strncat(logon_info, "@", 1);
+ 	strncat(logon_info, username, strlen(username));
+	strncat(logon_info, "@", 1);
+	strncat(logon_info, hashed_password, strlen(hashed_password));
+	strncat(logon_info, "@ ", 1);
+	strncat(logon_info, saltArray, strlen(saltArray));
+
+	printf("%s", logon_info);
+	fflush(stdout);
+
+	// Send logon_info to server for authentication
+	ssize_t bufferLen = strlen(logon_info); 
+ 	// send logon_info message to server
+	ssize_t numBytesSent = send(sock, logon_info, bufferLen, 0);
+	if (numBytesSent < 0)
+	  DieWithError((char*)"send() failed");
+}
+
 int SetupTCPClientSocket(const char *host, const char *service)
 {
 	// Tell the system what kind(s) of address info we want
@@ -121,48 +181,7 @@ int main (int argc, char *argv[])
 	{
 		if (strcmp(command, "logon") == 0)
 		{
-			// Initialize logon info
-			char username[SHORT_BUFFSIZE];
-			char hashed_password[65];
-			char password[SHORT_BUFFSIZE];
-			uint8_t hash[32];
-
-			// Generate salt for password
-			time_t sysTime;
-		 	time(&sysTime);
-			char* salt = ctime(&sysTime);
-			char saltArray[SHORT_BUFFSIZE];
-			strncpy(saltArray, salt, sizeof(saltArray));
-			printf("%s", saltArray);
-
-			// Clear new line from using scanf	
-			getchar();
-
-			// Parse credentials input
-		 	printf("Enter your username: ");
-			fgets(username, SHORT_BUFFSIZE, stdin);
-			printf("Enter your password: ");
-			fgets(password, SHORT_BUFFSIZE, stdin);
-			// Remove new line from fgets input
-			password[strlen(password)-1] = '\0';
-			
-			//Concatenate password and salt
-			strncat(password, saltArray, SHORT_BUFFSIZE - strlen(password));
-			// Print out salted password for testing
-			printf("%s", password);
-			fflush(stdout);
-
-			// Hash the salted password
-			calc_sha_256(hash, password, strlen(password));
-			hash_to_string(hashed_password, hash);
-
-			// Print out credentials for testing
-			printf("%s", username);
-			printf("%s\n", hashed_password);
-			fflush(stdout);
-		
-			
-
+			sendLOGON(sock);
 			// Switch commands
 			cout << "Enter Command in Small Case: " << endl;
 			scanf("%s", command);
