@@ -10,14 +10,13 @@ void HandleClient(int cliSock)
 
 	for (;;) // breaks when leave message is received
 	{
-		// receive message from client
-		char rcvMessage[BUFFSIZE];
 		// receive response message from server
-		int totalBytesRcvd = 0; // total number of bytes received
-		for (;;)
+		char buffer[BUFFSIZE];
+		ssize_t numBytesRcvd = 0;
+
+		while (buffer[numBytesRcvd - 1] != '\n')		
 		{
-			char buffer[BUFFSIZE];
-			ssize_t numBytesRcvd = recv(cliSock, buffer, BUFFSIZE-1, 0);
+			numBytesRcvd = recv(cliSock, buffer, BUFFSIZE-1, 0);
 			//printf("numBytesRcvd: %zu\n", numBytesRcvd); // debugging
 			//printf("buffer received: %s\n", buffer); // debugging
 			if (numBytesRcvd < 0)
@@ -25,26 +24,17 @@ void HandleClient(int cliSock)
 			else if (numBytesRcvd == 0)
 				DieWithError((char*) "recv() failed: connection closed prematurely");
 			buffer[numBytesRcvd] = '\0'; // append null-character
-
-			// append received buffer to response
-			int u;
-			for (u = totalBytesRcvd; u < totalBytesRcvd+numBytesRcvd; u++)
-			{
-				rcvMessage[u] = buffer[u-totalBytesRcvd];
-				cout << buffer[u-totalBytesRcvd] << endl;
-			}
-			rcvMessage[totalBytesRcvd] = '\0';
 		}
 
-
-
+		buffer[strlen(buffer) - 1] = '\0';
+		printf("%s", buffer);
 	
 		// Check the message type (first 4 bytes in the message)
 		char typeField[5];
 		int i;
 		for (i = 0; i < 4; i++)
 		{
-			typeField[i] = rcvMessage[i];
+			typeField[i] = buffer[i];
 		}
 		typeField[4] = '\0';
 
@@ -80,18 +70,19 @@ void HandleClient(int cliSock)
 		else if (strcmp(typeField, SALTType) == 0)
 		{
 				char *username;
-				username = strtok(rcvMessage, "@");
+				username = strtok(buffer, "@");
 				username = strtok(NULL, "@");
+				
+
 				// Open and parse database file for username
-				std::string database_name = "database.c";
+				std::string database_name = "database.dat";
 				char *cdatabase_name = new char[database_name.length() + 1];
 				strcpy(cdatabase_name, database_name.c_str());
 				int no_of_entries = 0;
 				int *num = &no_of_entries;
 				open_database(cdatabase_name);
 				char **data = lookup_user_names(username, num);
-				cout << data[0] << endl;		
-				delete [] cdatabase_name;
+				cout << data[0] << endl;	
 		}
 		else
 		{
