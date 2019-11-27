@@ -77,7 +77,22 @@ void HandleClient(int cliSock)
 			close(cliSock); // Close client socket
 			return;
 		}
-
+		else if (strcmp(typeField, SALTType) == 0)
+		{
+				char *username;
+				username = strtok(rcvMessage, "@");
+				username = strtok(NULL, "@");
+				// Open and parse database file for username
+				std::string database_name = "database.c";
+				char *cdatabase_name = new char[database_name.length() + 1];
+				strcpy(cdatabase_name, database_name.c_str());
+				int no_of_entries = 0;
+				int *num = &no_of_entries;
+				open_database(cdatabase_name);
+				char **data = lookup_user_names(username, num);
+				cout << data[0] << endl;		
+				delete [] cdatabase_name;
+		}
 		else
 		{
 			// do nothing

@@ -40,11 +40,11 @@ void sendLOGON(int sock)
 	uint8_t hash[32];
 
 	// Generate salt for password
-	time_t sysTime;
- 	time(&sysTime);
-	char* salt = ctime(&sysTime);
-	char saltArray[SHORT_BUFFSIZE];
-	strncpy(saltArray, salt, sizeof(saltArray));
+//	time_t sysTime;
+// 	time(&sysTime);
+//	char* salt = ctime(&sysTime);
+//	char saltArray[SHORT_BUFFSIZE];
+//	strncpy(saltArray, salt, sizeof(saltArray));
 
 	// Clear new line from using scanf	
 	getchar();
@@ -61,6 +61,22 @@ void sendLOGON(int sock)
 	// Remove new line from fgets input
 	password[strlen(password)-1] = '\0';
 	
+	// Request salt from server based on username
+	char saltBuffer[SHORT_BUFFSIZE];
+	ssize_t stringLen = strlen(username); 
+	strncat(saltBuffer, "SALT", 4);
+	strncat(saltBuffer, "@", 1);
+	strncat(saltBuffer, username, stringLen);
+	strncat(saltBuffer, "\n", 1);
+	
+	ssize_t saltBuffLen = strlen(saltBuffer);
+	ssize_t numBytesSent = send(sock, saltBuffer, saltBuffLen, 0);
+	if (numBytesSent < 0)
+	  DieWithError((char*)"send() failed");	
+	
+	// Receive salt
+	char saltArray[SHORT_BUFFSIZE];
+
 	//Concatenate password and salt
 	strncat(password, saltArray, SHORT_BUFFSIZE - strlen(password));
 	// Print out salted password for testing
@@ -77,16 +93,14 @@ void sendLOGON(int sock)
  	strncat(logon_info, username, strlen(username));
 	strncat(logon_info, "@", 1);
 	strncat(logon_info, hashed_password, strlen(hashed_password));
-	strncat(logon_info, "@ ", 1);
-	strncat(logon_info, saltArray, strlen(saltArray));
 
-	printf("%s", logon_info);
+	printf("%s\n", logon_info);
 	fflush(stdout);
 
 	// Send logon_info to server for authentication
 	ssize_t bufferLen = strlen(logon_info); 
  	// send logon_info message to server
-	ssize_t numBytesSent = send(sock, logon_info, bufferLen, 0);
+	numBytesSent = send(sock, logon_info, bufferLen, 0);
 	if (numBytesSent < 0)
 	  DieWithError((char*)"send() failed");
 }

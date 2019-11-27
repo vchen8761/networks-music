@@ -30,6 +30,7 @@
 #define PULLType "PULL"
 #define LOGONType "LOGON"
 #define LEAVEType "LEAV"
+#define SALTType "SALT"
 
 inline void DieWithError(const char *errorMessage){
 	perror(errorMessage);
