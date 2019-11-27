@@ -28,7 +28,7 @@
 
 #define LISTType "LIST"
 #define PULLType "PULL"
-#define LOGONType "LOGON"
+#define LOGONType "LOGO"
 #define LEAVEType "LEAV"
 #define SALTType "SALT"
 

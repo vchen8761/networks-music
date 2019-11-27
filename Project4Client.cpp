@@ -102,11 +102,12 @@ void sendLOGON(int sock)
 	// Construct buffer with command, username, hashed_password, and salt
 	// (seperated by @)
 	char logon_info[BUFFSIZE];
-	strncat(logon_info, "LOGON", 6);
+	strncat(logon_info, "LOGON", 5);
 	strncat(logon_info, "@", 1);
  	strncat(logon_info, username, strlen(username));
 	strncat(logon_info, "@", 1);
 	strncat(logon_info, hashed_password, strlen(hashed_password));
+	strncat(logon_info, "\n", 1);
 
 	printf("%s\n", logon_info);
 	fflush(stdout);

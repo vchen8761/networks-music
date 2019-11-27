@@ -38,7 +38,8 @@ void HandleClient(int cliSock)
 		}
 		typeField[4] = '\0';
 
-		printf("type of message received: %s\n", typeField); // debugging
+		printf("\nType of message received: %s\n", typeField); // debugging
+		fflush(stdout);
 
 
 		// Received LIST message
@@ -63,6 +64,37 @@ void HandleClient(int cliSock)
 			// Use strtok to deliminate by @ 
 			// and check database for user-password match.
 			// See SALT else if below.
+			printf("%s", buffer);	
+			char *username;
+			username = strtok(buffer, "@");
+			username = strtok(NULL, "@");
+				
+			// Open and parse database file for username
+			std::string database_name = "database.dat";
+			char *cdatabase_name = new char[database_name.length() + 1];
+			strcpy(cdatabase_name, database_name.c_str());
+			int no_of_entries = 0;
+			int *num = &no_of_entries;
+			open_database(cdatabase_name);
+			char **data = lookup_user_names(username, num);
+		
+			printf("\n%s", data[0]);
+			printf("%s", buffer);
+			
+			// strtok is causing unexpected issues. maybe store in database like:
+			// salt:passwordhash
+			//
+			// rather than
+			// salt:
+			// passwordhash:
+					
+//			char *db_password_hash = data[1];
+//			printf("\n%s", db_password_hash);
+//			db_password_hash[strlen(db_password_hash) - 2] = '\0';
+//			printf("\n%s", db_password_hash);
+//			char *client_password_hash = strtok(buffer, "@");
+//			printf("\n%s", client_password_hash);
+			fflush(stdout);
 		}
 
 		else if (strcmp(typeField, LEAVEType) == 0)
@@ -99,7 +131,8 @@ void HandleClient(int cliSock)
 				ssize_t numBytesSent = send(cliSock, saltBuffer, saltBuffLen, 0);
 				if (numBytesSent < 0)
 	  			DieWithError((char*)"send() failed");	
-
+				
+				delete [] cdatabase_name;
 		}
 		else
 		{
