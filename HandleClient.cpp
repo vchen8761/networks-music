@@ -58,7 +58,11 @@ void HandleClient(int cliSock)
 		//LOGON MESSAGE
 		else if (strcmp(typeField, LOGONType) == 0)
 		{
-			
+			// Receive buffer of command type, username, and password hash
+			// seperated by @ symbol.
+			// Use strtok to deliminate by @ 
+			// and check database for user-password match.
+			// See SALT else if below.
 		}
 
 		else if (strcmp(typeField, LEAVEType) == 0)
@@ -82,7 +86,20 @@ void HandleClient(int cliSock)
 				int *num = &no_of_entries;
 				open_database(cdatabase_name);
 				char **data = lookup_user_names(username, num);
-				cout << data[0] << endl;	
+
+				// Parse salt from data received from database
+			  char *salt = data[0];
+				salt[strlen(salt) - 2] = '\0';
+				char saltBuffer[SHORT_BUFFSIZE];
+				strncat(saltBuffer, salt, strlen(salt));
+				strncat(saltBuffer, "\n", 1);
+
+				// Send salt to client
+				ssize_t saltBuffLen = strlen(saltBuffer);
+				ssize_t numBytesSent = send(cliSock, saltBuffer, saltBuffLen, 0);
+				if (numBytesSent < 0)
+	  			DieWithError((char*)"send() failed");	
+
 		}
 		else
 		{

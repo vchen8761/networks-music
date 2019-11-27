@@ -76,20 +76,20 @@ void sendLOGON(int sock)
 	
 	// Receive salt
 	char saltArray[SHORT_BUFFSIZE];
-//	ssize_t numBytes = 0;
-//	unsigned int totalBytesRcvd = 0;	// Count of total bytes received
-//	// Receive until new line character 
-//	while (saltArray[numBytes - 1] != '\n') {
-//		/* Receive up to the buffer size (minus 1 to leave space for
-// 		 a null terminator) bytes from the sendor */
-//		numBytes = recv(sock, saltArray, SHORT_BUFFSIZE - 1, 0);		
-//		if (numBytes < 0)
-//			DieWithError("recv() failed");
-//		else if (numBytes == 0)
-//			DieWithError("recv() failed, connection closed prematurely");
-//		totalBytesRcvd += numBytes;		// Keep tally of total bytes
-//		fputs(buffer, stdout);			  // Print the echo buffer
-//	}
+	ssize_t numBytes = 0;
+	// Receive until new line character 
+	while (saltArray[numBytes - 1] != '\n') {
+		/* Receive up to the buffer size (minus 1 to leave space for
+ 		 a null terminator) bytes from the sendor */
+		numBytes = recv(sock, saltArray, SHORT_BUFFSIZE - 1, 0);		
+		if (numBytes < 0)
+			DieWithError("recv() failed");
+		else if (numBytes == 0)
+			DieWithError("recv() failed, connection closed prematurely");
+	}
+	saltArray[strlen(saltArray) - 1] = '\0';
+	printf("Salt: %s\n", saltArray);
+	fflush(stdout);
 
 	//Concatenate password and salt
 	strncat(password, saltArray, SHORT_BUFFSIZE - strlen(password));
@@ -117,6 +117,8 @@ void sendLOGON(int sock)
 	numBytesSent = send(sock, logon_info, bufferLen, 0);
 	if (numBytesSent < 0)
 	  DieWithError((char*)"send() failed");
+
+	// RECEIVE ANSWER FROM SERVER: Is password hash correct or not?
 }
 
 int SetupTCPClientSocket(const char *host, const char *service)
