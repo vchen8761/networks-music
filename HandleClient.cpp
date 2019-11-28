@@ -27,7 +27,7 @@ void HandleClient(int cliSock)
 		}
 
 		buffer[strlen(buffer) - 1] = '\0';
-		printf("%s", buffer);
+		printf("\n%s", buffer);
 	
 		// Check the message type (first 4 bytes in the message)
 		char typeField[5];
@@ -59,15 +59,11 @@ void HandleClient(int cliSock)
 		//LOGON MESSAGE
 		else if (strcmp(typeField, LOGONType) == 0)
 		{
-			// Receive buffer of command type, username, and password hash
-			// seperated by @ symbol.
-			// Use strtok to deliminate by @ 
-			// and check database for user-password match.
-			// See SALT else if below.
-			printf("%s", buffer);	
 			char *username;
+			char *password;
 			username = strtok(buffer, "@");
 			username = strtok(NULL, "@");
+			password = strtok(NULL, "@");
 				
 			// Open and parse database file for username
 			std::string database_name = "database.dat";
@@ -77,24 +73,36 @@ void HandleClient(int cliSock)
 			int *num = &no_of_entries;
 			open_database(cdatabase_name);
 			char **data = lookup_user_names(username, num);
-		
-			printf("\n%s", data[0]);
-			printf("%s", buffer);
-			
-			// strtok is causing unexpected issues. maybe store in database like:
-			// salt:passwordhash
-			//
-			// rather than
-			// salt:
-			// passwordhash:
-					
-//			char *db_password_hash = data[1];
-//			printf("\n%s", db_password_hash);
-//			db_password_hash[strlen(db_password_hash) - 2] = '\0';
-//			printf("\n%s", db_password_hash);
-//			char *client_password_hash = strtok(buffer, "@");
-//			printf("\n%s", client_password_hash);
+			delete [] cdatabase_name;
+
+			printf("\nDatabase: %s", data[0]);
+			printf("\nClient: %s", password);
 			fflush(stdout);
+
+			// Authenticate client password using database entry
+			char *db_password = data[0];
+			char temp[SHORT_BUFFSIZE];
+			strncat(temp, db_password, strlen(db_password));
+			db_password = strtok(temp, ":");
+			db_password = strtok(NULL, ":");
+	
+			//TODO: Possible buffer overflow when identity buffer is greater	
+			char identityBuffer[5];
+			if (strcmp(db_password, password) == 0) 
+			{
+				strncat(identityBuffer, "True", 4);				
+			}
+			else 
+			{
+				strncat(identityBuffer, "False", 5);		
+			}
+			
+			strncat(identityBuffer, "\n", 1);
+
+			// Send salt to client
+			ssize_t numBytesSent = send(cliSock, identityBuffer, strlen(identityBuffer), 0);
+			if (numBytesSent < 0)
+	  		DieWithError((char*)"send() failed");	
 		}
 
 		else if (strcmp(typeField, LEAVEType) == 0)
@@ -119,9 +127,13 @@ void HandleClient(int cliSock)
 				open_database(cdatabase_name);
 				char **data = lookup_user_names(username, num);
 
+				// If user not found in database handle case.
+
 				// Parse salt from data received from database
 			  char *salt = data[0];
-				salt[strlen(salt) - 2] = '\0';
+				char temp[SHORT_BUFFSIZE];
+				strncat(temp, salt, strlen(salt));
+				salt = strtok(temp, ":");
 				char saltBuffer[SHORT_BUFFSIZE];
 				strncat(saltBuffer, salt, strlen(salt));
 				strncat(saltBuffer, "\n", 1);

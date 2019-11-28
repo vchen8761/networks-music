@@ -39,13 +39,6 @@ void sendLOGON(int sock)
 	char password[SHORT_BUFFSIZE];
 	uint8_t hash[32];
 
-	// Generate salt for password
-//	time_t sysTime;
-// 	time(&sysTime);
-//	char* salt = ctime(&sysTime);
-//	char saltArray[SHORT_BUFFSIZE];
-//	strncpy(saltArray, salt, sizeof(saltArray));
-
 	// Clear new line from using scanf	
 	getchar();
 
@@ -89,17 +82,16 @@ void sendLOGON(int sock)
 	}
 	saltArray[strlen(saltArray) - 1] = '\0';
 	printf("Salt: %s\n", saltArray);
-	fflush(stdout);
 
 	//Concatenate password and salt
-	strncat(password, saltArray, SHORT_BUFFSIZE - strlen(password));
-	// Print out salted password for testing
+	strncat(password, saltArray, strlen(saltArray));
+	memset(saltArray, 0, SHORT_BUFFSIZE);
 
 	// Hash the salted password
 	calc_sha_256(hash, password, strlen(password));
 	hash_to_string(hashed_password, hash);
 
-	// Construct buffer with command, username, hashed_password, and salt
+	// Construct buffer with command, username, hashed_password
 	// (seperated by @)
 	char logon_info[BUFFSIZE];
 	strncat(logon_info, "LOGON", 5);
@@ -109,8 +101,7 @@ void sendLOGON(int sock)
 	strncat(logon_info, hashed_password, strlen(hashed_password));
 	strncat(logon_info, "\n", 1);
 
-	printf("%s\n", logon_info);
-	fflush(stdout);
+	printf("%s", logon_info);
 
 	// Send logon_info to server for authentication
 	ssize_t bufferLen = strlen(logon_info); 
@@ -120,6 +111,21 @@ void sendLOGON(int sock)
 	  DieWithError((char*)"send() failed");
 
 	// RECEIVE ANSWER FROM SERVER: Is password hash correct or not?
+	char identityBuffer[SHORT_BUFFSIZE];
+	numBytes = 0;
+	// Receive until new line character 
+	while (identityBuffer[numBytes - 1] != '\n') {
+		/* Receive up to the buffer size (minus 1 to leave space for
+ 		 a null terminator) bytes from the sendor */
+		numBytes = recv(sock, identityBuffer, SHORT_BUFFSIZE - 1, 0);		
+		if (numBytes < 0)
+			DieWithError("recv() failed");
+		else if (numBytes == 0)
+			DieWithError("recv() failed, connection closed prematurely");
+	}
+
+	// If correct credentials then prints True, otherwise prints False.
+	printf("%s", identityBuffer);
 }
 
 int SetupTCPClientSocket(const char *host, const char *service)
@@ -163,7 +169,6 @@ const char *serverHost;
 /* function declarations */
 int main (int argc, char *argv[])
 {
-	cout << "Here" << endl;
 	// Argument parsing variables
   serverHost = SERVER_HOST;
   //unsigned short serverPort = atoi(SERVER_PORT);
