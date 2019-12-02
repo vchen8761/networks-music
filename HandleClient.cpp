@@ -1,8 +1,11 @@
 
 #include "NetworkHeader.h"
 #include "WhoHeader.h"
+#include <string.h>
 
 using namespace std;
+
+string user_name;
 
 // receives and sets response packet to response
 void HandleClient(int cliSock)
@@ -63,6 +66,7 @@ void HandleClient(int cliSock)
 			char *password;
 			username = strtok(buffer, "@");
 			username = strtok(NULL, "@");
+			std::string username_temp(username);
 			password = strtok(NULL, "@");
 				
 			// Open and parse database file for username
@@ -91,6 +95,7 @@ void HandleClient(int cliSock)
 			if (strcmp(db_password, password) == 0) 
 			{
 				strncat(identityBuffer, "True", 4);				
+				user_name = username_temp;	
 			}
 			else 
 			{
@@ -103,6 +108,7 @@ void HandleClient(int cliSock)
 			ssize_t numBytesSent = send(cliSock, identityBuffer, strlen(identityBuffer), 0);
 			if (numBytesSent < 0)
 	  		DieWithError((char*)"send() failed");	
+
 		}
 
 		else if (strcmp(typeField, LEAVEType) == 0)
