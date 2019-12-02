@@ -1,4 +1,5 @@
 #include "NetworkHeader.h"
+#include "WhoHeader.h"
 #include "sha-256.c"
 #include <time.h>
 
@@ -128,6 +129,7 @@ void sendLOGON(int sock)
 	printf("%s", identityBuffer);
 }
 
+
 int SetupTCPClientSocket(const char *host, const char *service)
 {
 	// Tell the system what kind(s) of address info we want
@@ -207,6 +209,8 @@ int main (int argc, char *argv[])
 	if (sock < 0)
 		DieWithError((char*) "SetupTCPClientSocket() failed");
 
+	// open database file
+	open_database("database.dat", "clientSong/");
 
 	// ask user for command (list, diff, sync, leave)
 	cout << "Enter Command in Small Case: " << endl;
@@ -224,6 +228,19 @@ int main (int argc, char *argv[])
 		}
 		else if (strcmp(command, "list") == 0)
 		{
+			// send LIST message to server
+			sendLIST(sock);
+
+			// receive listResponse from server
+			char listResponse[BUFFSIZE];
+			unsigned long length_Message = receiveResponse(sock, listResponse);
+			
+			// print every song from listResponse
+			printLIST(listResponse, length_Message);
+
+			// read another command from user
+			printf("Enter Another Command in Small Case: ");
+			scanf("%s", command);
 
 		}
 		else if (strcmp(command, "diff") == 0)

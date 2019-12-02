@@ -12,6 +12,7 @@
 //#include <stdint.h>			/* for uint16_t */
 //#include <inttypes.h>		/* for printing uint16_t */
 #include <pthread.h>        /* for multi-clienting */
+#include <openssl/sha.h>    /* for SHA-256 */
 
 #define DATABASE_NAME "database.dat"
 #define SERVER_HOST "141.166.207.144" 
@@ -25,6 +26,8 @@
 #define	BUFFSIZE	66535	/* buffer size for reads and writes */
 #define	LISTENQ		1024	/* 2nd argument to listen() */
 #define SHORT_BUFFSIZE  100     /* For messages I know are short */
+#define SHA_LENGTH 128 /* length of SHA-256 */
+
 
 #define LISTType "LIST"
 #define PULLType "PULL"
