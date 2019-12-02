@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>  // For isspace
+#include <sys/stat.h>
+#include <unistd.h>
+#include <sys/types.h>
 
 #define MAXIMUM_DATABASE_ENTRY_LENGTH 64
 #define FIRSTFIELD_LENGTH 64
@@ -78,29 +81,58 @@ void close_database (void) {
   fclose(filePointer);
 }
 
-// // Testing 
-// int main()
-// {
 
-//   open_database("username_songs.dat");
-//   int numberOfEntries;
-//   char **songList;
-//   songList = lookup_song_lists("username3", &numberOfEntries);
-//   close_database();
+// Function for finding the size of a file
+// Called with: findSize("file.mp3")
 
-//   int i;
-//   int j;
-//   for (i = 0; i < numberOfEntries; ++i)
-//   {
-//     for (j = 0; j < 20; ++j)
-//     {
-//       printf("%c", songList[i][j]);
-//     }
-//     printf("%s\n", "");
-//   }
+long int findSize(char file_name[]) 
+{ 
+    // opening the file in read mode 
+    FILE* fp = fopen(file_name, "r"); 
+  
+    // checking if the file exist or not 
+    if (fp == NULL) { 
+        printf("File Not Found!\n"); 
+        return -1; 
+    } 
+  
+    fseek(fp, 0L, SEEK_END); 
+  
+    // calculating the size of the file 
+    long int res = ftell(fp); 
+  
+    // closing the file 
+    fclose(fp); 
+  
+    return res; 
+}
 
-//   return 0;
-// }
+
+// Testing 
+int main()
+{
+
+  open_database("username_songs.dat");
+  int numberOfEntries;
+  char **songList;
+  songList = lookup_song_lists("username2", &numberOfEntries);
+  close_database();
+
+  int i;
+  int j;
+  for (i = 0; i < numberOfEntries; ++i)
+  {
+    for (j = 0; j < 64; ++j)
+    {
+      printf("%c", songList[i][j]);
+    }
+    printf("%s\n", "");
+  }
+
+  printf("%lu\n", findSize("eventually.mp3"));
+
+  return 0;
+}
 
 
 
