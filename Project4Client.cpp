@@ -1,8 +1,11 @@
 #include "NetworkHeader.h"
 #include "sha-256.c"
 #include <time.h>
+#include <string.h>
 
 using namespace std;
+
+string user_name;
 
 static void hash_to_string(char string[65], const uint8_t hash[32])
 {
@@ -123,6 +126,9 @@ void sendLOGON(int sock)
 
 	// If correct credentials then prints True, otherwise prints False.
 	printf("%s", identityBuffer);
+
+	if (strcmp(identityBuffer, "True\n") == 0)
+		user_name = username;
 }
 
 int SetupTCPClientSocket(const char *host, const char *service)
@@ -204,8 +210,10 @@ int main (int argc, char *argv[])
 	if (sock < 0)
 		DieWithError((char*) "SetupTCPClientSocket() failed");
 
+	while (user_name == "")
+		sendLOGON(sock);
 
-	sendLOGON(sock);
+	cout << user_name << endl;
 
 	// ask user for command (list, diff, sync, leave)
 	cout << "Enter Command in Small Case: " << endl;
