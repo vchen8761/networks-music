@@ -12,7 +12,7 @@
 //#include <stdint.h>			/* for uint16_t */
 //#include <inttypes.h>		/* for printing uint16_t */
 #include <pthread.h>        /* for multi-clienting */
-#include <openssl/sha.h>    /* for SHA-256 */
+//#include <openssl/sha.h>    /* for SHA-256 */
 
 #define DATABASE_NAME "database.dat"
 #define SERVER_HOST "141.166.207.144" 

@@ -1,8 +1,32 @@
 
 #include "NetworkHeader.h"
 #include "WhoHeader.h"
+#define MAX_SONGNAME_LENGTH 255 /* max song name length */
+
 
 using namespace std;
+
+const char* byte_to_binary(uint8_t x, char* binary)
+{
+    binary[0] = '\0';
+
+    int z;
+    for (z = 128; z > 0; z >>= 1)
+    {
+        strcat(binary, ((x & z) == z) ? "1" : "0");
+    }
+
+    return binary;
+}
+
+unsigned long retrieveLength(char* packet)
+{
+		char firstBin[17]; char secondBin[9];
+		byte_to_binary(packet[4], firstBin);
+		byte_to_binary(packet[5], secondBin);
+		strcat(firstBin, secondBin);
+		return strtoul(firstBin, NULL, 2);
+}
 
 unsigned long receiveResponse(int sock, char* response)
 {
@@ -54,32 +78,52 @@ unsigned long receiveResponse(int sock, char* response)
 // receives and sets response packet to response
 void HandleClient(int cliSock)
 {
-	char* musicDir = "serverSong/";
+	std::string musicDirName = "username_songs.dat";
+	char *cmusicDirName = new char[musicDirName.length() + 1];
+	strcpy(cmusicDirName, musicDirName.c_str());
 	// open database file
-	open_database(databaseName, musicDir);
-
+	open_database_song(cmusicDirName);
+		
 	for (;;) // breaks when leave message is received
 	{
-		// receive response message from server
+			// receive response message from server
 			char buffer[BUFFSIZE];
-			unsigned long length_Message = receiveResponse(cliSock, rcvMessage);
+			ssize_t numBytesRcvd = 0;
+
+			while (buffer[numBytesRcvd - 1] != '\n')		
+			{
+				numBytesRcvd = recv(cliSock, buffer, BUFFSIZE-1, 0);
+				//printf("numBytesRcvd: %zu\n", numBytesRcvd); // debugging
+				//printf("buffer received: %s\n", buffer); // debugging
+				if (numBytesRcvd < 0)
+					DieWithError((char*) "recv() failed");
+				else if (numBytesRcvd == 0)
+					DieWithError((char*) "recv() failed: connection closed prematurely");
+				buffer[numBytesRcvd] = '\0'; // append null-character
+			}
+
+			buffer[strlen(buffer) - 1] = '\0';
+			printf("\n%s", buffer);
+
 	
 			// Check the message type (first 4 bytes in the message)
 			char typeField[5];
 			int i;
 			for (i = 0; i < 4; i++)
 			{
-				typeField[i] = rcvMessage[i];
+				typeField[i] = buffer[i];
 			}
 			typeField[4] = '\0';
 
-			printf("type of message received: %s\n", typeField); // debugging
+			printf("\nType of message received: %s\n", typeField); // debugging
+			fflush(stdout);
 
 			// Received LIST message
 			if (strcmp(typeField, LISTType) == 0)
-			{
+			{	
 				int numEntries; // specifies number of songs
-				char** songs = lookup_songs(&numEntries);
+				
+				char** songs = lookup_song_lists(&username, &numEntries);
 
 				char listResponse[BUFFSIZE];
 				strcpy(listResponse, LISTType);
@@ -89,17 +133,18 @@ void HandleClient(int cliSock)
 				for (i = 0; i < numEntries; i++)
 				{
 					char** oneSong = songs+i;
+
+					// find the first occurence of ':'
+					int k; int firstIndex;
+					for (k = 0; k < MAX_SONGNAME_LENGTH+1; k++) // at most MAX_SONGNAME_LENGTH characters before first ':'
+					{
+						if ((*oneSong)[k] == ':')
+						{
+							firstIndex = k;
+							break;
+						}
+					}
 				
-					// // find the first occurence of ':'
-					// int k; int firstIndex;
-					// for (k = 0; k < MAX_SONGNAME_LENGTH+1; k++) // at most MAX_SONGNAME_LENGTH characters before first ':'
-					// {
-					// 	if ((*oneSong)[k] == ':')
-					// 	{
-					// 		firstIndex = k;
-					// 		break;
-					// 	}
-					// }
 				
 					// retrieve song name
 					char songName[MAX_SONGNAME_LENGTH+1];
@@ -112,10 +157,6 @@ void HandleClient(int cliSock)
 					}
 					//printf("songName: %s\n", songName); // debugging
 
-					// retrieve SHA 
-					char sha[SHA_LENGTH+1];
-					strcpy(sha, (*oneSong)+firstIndex+1);
-					//printf("SHA: %s\n", sha); // debugging
 
 					// store song name in listResponse packet
 					int j;
@@ -125,20 +166,12 @@ void HandleClient(int cliSock)
 						//printf("character appended: %c\n", songName[j]); // debugging
 					}
 
-					// // store SHA listResponse packet
-					// int y;
-					// for (y = 0; y < SHA_LENGTH; y++) // 128 bytes used for SHA
-					// {
-					// 	listResponse[4 + 2 + i*(MAX_SONGNAME_LENGTH+SHA_LENGTH) + MAX_SONGNAME_LENGTH + y] = sha[y]; // 4 bytes for "LIST", 2 bytes for length field
-					// 	//printf("character appended: %c\n", sha[y]); // debugging
-					// }
-
 
 				}
 
 				// fill length field in 4th-5th bits of listResponse packet
-				listResponse[5] = (uint16_t)numEntries*(MAX_SONGNAME_LENGTH+SHA_LENGTH);
-				listResponse[4] = (uint16_t)numEntries*(MAX_SONGNAME_LENGTH+SHA_LENGTH) >> 8;
+				listResponse[5] = (uint16_t)numEntries*(MAX_SONGNAME_LENGTH);
+				listResponse[4] = (uint16_t)numEntries*(MAX_SONGNAME_LENGTH) >> 8;
 
 				/*//print listResponse DEBUGGING
 				int j;
@@ -149,7 +182,7 @@ void HandleClient(int cliSock)
 				printf("\n");*/
 
 				// send listResponse packet
-				int length_response = 4 + 2 + numEntries*(MAX_SONGNAME_LENGTH+SHA_LENGTH); // length of listResponse packet
+				int length_response = 4 + 2 + numEntries*(MAX_SONGNAME_LENGTH); // length of listResponse packet
 				ssize_t numBytesSent = send(cliSock, listResponse, length_response, 0);
 				if (numBytesSent < 0)
 				{
@@ -165,68 +198,15 @@ void HandleClient(int cliSock)
 				
 			}
 
-		//LOGON MESSAGE
-		else if (strcmp(typeField, LOGONType) == 0)
-		{
-			char *username;
-			char *password;
-			username = strtok(buffer, "@");
-			username = strtok(NULL, "@");
-			password = strtok(NULL, "@");
-				
-			// Open and parse database file for username
-			std::string database_name = "database.dat";
-			char *cdatabase_name = new char[database_name.length() + 1];
-			strcpy(cdatabase_name, database_name.c_str());
-			int no_of_entries = 0;
-			int *num = &no_of_entries;
-			open_database(cdatabase_name);
-			char **data = lookup_user_names(username, num);
-			delete [] cdatabase_name;
-
-			printf("\nDatabase: %s", data[0]);
-			printf("\nClient: %s", password);
-			fflush(stdout);
-
-			// Authenticate client password using database entry
-			char *db_password = data[0];
-			char temp[SHORT_BUFFSIZE];
-			strncat(temp, db_password, strlen(db_password));
-			db_password = strtok(temp, ":");
-			db_password = strtok(NULL, ":");
-	
-			//TODO: Possible buffer overflow when identity buffer is greater	
-			char identityBuffer[5];
-			if (strcmp(db_password, password) == 0) 
+			//LOGON MESSAGE
+			else if (strcmp(typeField, LOGONType) == 0)
 			{
-				strncat(identityBuffer, "True", 4);				
-			}
-			else 
-			{
-				strncat(identityBuffer, "False", 5);		
-			}
-			
-			strncat(identityBuffer, "\n", 1);
-
-			// Send salt to client
-			ssize_t numBytesSent = send(cliSock, identityBuffer, strlen(identityBuffer), 0);
-			if (numBytesSent < 0)
-	  		DieWithError((char*)"send() failed");	
-		}
-
-		else if (strcmp(typeField, LEAVEType) == 0)
-		{
-			// Close database
-			close(cliSock); // Close client socket
-			return;
-		}
-		else if (strcmp(typeField, SALTType) == 0)
-		{
 				char *username;
+				char *password;
 				username = strtok(buffer, "@");
 				username = strtok(NULL, "@");
-				
-
+				password = strtok(NULL, "@");
+					
 				// Open and parse database file for username
 				std::string database_name = "database.dat";
 				char *cdatabase_name = new char[database_name.length() + 1];
@@ -235,29 +215,82 @@ void HandleClient(int cliSock)
 				int *num = &no_of_entries;
 				open_database(cdatabase_name);
 				char **data = lookup_user_names(username, num);
+				delete [] cdatabase_name;
 
-				// If user not found in database handle case.
+				printf("\nDatabase: %s", data[0]);
+				printf("\nClient: %s", password);
+				fflush(stdout);
 
-				// Parse salt from data received from database
-			  char *salt = data[0];
+				// Authenticate client password using database entry
+				char *db_password = data[0];
 				char temp[SHORT_BUFFSIZE];
-				strncat(temp, salt, strlen(salt));
-				salt = strtok(temp, ":");
-				char saltBuffer[SHORT_BUFFSIZE];
-				strncat(saltBuffer, salt, strlen(salt));
-				strncat(saltBuffer, "\n", 1);
+				strncat(temp, db_password, strlen(db_password));
+				db_password = strtok(temp, ":");
+				db_password = strtok(NULL, ":");
+		
+				//TODO: Possible buffer overflow when identity buffer is greater	
+				char identityBuffer[5];
+				if (strcmp(db_password, password) == 0) 
+				{
+					strncat(identityBuffer, "True", 4);				
+				}
+				else 
+				{
+					strncat(identityBuffer, "False", 5);		
+				}
+				
+				strncat(identityBuffer, "\n", 1);
 
 				// Send salt to client
-				ssize_t saltBuffLen = strlen(saltBuffer);
-				ssize_t numBytesSent = send(cliSock, saltBuffer, saltBuffLen, 0);
+				ssize_t numBytesSent = send(cliSock, identityBuffer, strlen(identityBuffer), 0);
 				if (numBytesSent < 0)
-	  			DieWithError((char*)"send() failed");	
-				
-				delete [] cdatabase_name;
-		}
-		else
-		{
-			// do nothing
-		}
+		  		DieWithError((char*)"send() failed");	
+			}
+
+			else if (strcmp(typeField, LEAVEType) == 0)
+			{
+				// Close database
+				close(cliSock); // Close client socket
+				return;
+			}
+			else if (strcmp(typeField, SALTType) == 0)
+			{
+					char *username;
+					username = strtok(buffer, "@");
+					username = strtok(NULL, "@");
+					
+
+					// Open and parse database file for username
+					std::string database_name = "database.dat";
+					char *cdatabase_name = new char[database_name.length() + 1];
+					strcpy(cdatabase_name, database_name.c_str());
+					int no_of_entries = 0;
+					int *num = &no_of_entries;
+					open_database(cdatabase_name);
+					char **data = lookup_user_names(username, num);
+
+					// If user not found in database handle case.
+
+					// Parse salt from data received from database
+				  char *salt = data[0];
+					char temp[SHORT_BUFFSIZE];
+					strncat(temp, salt, strlen(salt));
+					salt = strtok(temp, ":");
+					char saltBuffer[SHORT_BUFFSIZE];
+					strncat(saltBuffer, salt, strlen(salt));
+					strncat(saltBuffer, "\n", 1);
+
+					// Send salt to client
+					ssize_t saltBuffLen = strlen(saltBuffer);
+					ssize_t numBytesSent = send(cliSock, saltBuffer, saltBuffLen, 0);
+					if (numBytesSent < 0)
+		  			DieWithError((char*)"send() failed");	
+					
+					delete [] cdatabase_name;
+			}
+			else
+			{
+				// do nothing
+			}
 	}
 }

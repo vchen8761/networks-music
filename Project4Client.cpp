@@ -13,6 +13,32 @@ static void hash_to_string(char string[65], const uint8_t hash[32])
 	}
 }	
 
+// Constructs and sends LIST message to server.
+void sendLIST(int sock)
+{
+	// construct LIST message
+	char listMessage[BUFFSIZE];
+	strcpy(listMessage, LISTType);
+	// length field is zero
+	listMessage[4] = 0x0;
+	listMessage[5] = 0x0;
+
+	// printf("LIST TYPE??: ");
+	// int i;
+	// for (i = 0; i < 4; i++)
+	// {
+	// 	printf("%c", listMessage[i]);
+	// }
+	// printf("\n");
+	
+	// send LIST message to server
+	ssize_t numBytesSent = send(sock, listMessage, 4+2, 0);
+	if (numBytesSent < 0)
+	{
+		DieWithError("send() failed");
+	}
+}
+
 // Constructs and sends LEAVE message to server.
 void sendLEAVE(int sock)
 {
@@ -210,7 +236,7 @@ int main (int argc, char *argv[])
 		DieWithError((char*) "SetupTCPClientSocket() failed");
 
 	// open database file
-	open_database("database.dat", "clientSong/");
+	//open_database("username_songs.dat");
 
 	// ask user for command (list, diff, sync, leave)
 	cout << "Enter Command in Small Case: " << endl;
@@ -234,9 +260,6 @@ int main (int argc, char *argv[])
 			// receive listResponse from server
 			char listResponse[BUFFSIZE];
 			unsigned long length_Message = receiveResponse(sock, listResponse);
-			
-			// print every song from listResponse
-			printLIST(listResponse, length_Message);
 
 			// read another command from user
 			printf("Enter Another Command in Small Case: ");

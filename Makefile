@@ -4,7 +4,7 @@
 # Macros
 CLIENT_SRCS=  Project4Client.cpp
 SERVER_SRCS=  Project4Server.cpp HandleClient.cpp
-SRCS=Database.c
+SRCS=Database.c listCommand.c
 HDRS=NetworkHeader.h WhoHeader.h
 CFLAGS= -Wall
 LFLAGS= -lpthread
@@ -16,7 +16,7 @@ CC= g++
 
 all: clean Project4Server Project4Client
 
-Project4Server: $(SERVER_SRCS) $(HDRS)
+Project4Server: $(SERVER_SRCS) $(SRCS) $(HDRS)
 	$(CC) $(CFLAGS) -o $@ $(SERVER_SRCS) $(SRCS) $(LFLAGS)
 
 Project4Client: $(CLIENT_SRCS) $(SRCS) $(HDRS)

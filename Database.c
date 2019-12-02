@@ -5,77 +5,70 @@
 #define FIRSTFIELD_LENGTH 8
 #define SECONDFIELD_LENGTH 20
 #define MAX_NUM_RECORDS 100
-#define SHA_LENGTH 128
-
 
 static FILE *filePointer;
-static char* songList[MAX_NUM_RECORDS]; // list of songs in local database
+static char *userList[MAX_NUM_RECORDS];
 static char **nullPtr = NULL;
-static int numEntries; // number of entries in local database
-static char* songDir;
 
-void open_database (char *filename, char* dir) {
-  if ( (filePointer = fopen(filename,"r+")) == NULL ) {
+void open_database ( char *filename) {
+  if ( (filePointer = fopen(filename,"r")) == NULL ) {
     fprintf(stderr, "Error: Can't open file %s\n", filename);
     exit(1);
   }
+}
 
-  songDir = strdup(dir);
-  //sync_database(dir);
-  intializeSongList();
-  printf("Number of songs: %d\n", numEntries);
+char **lookup_user_names (char *host_name, int *no_of_entries) {
+
+  char *firstField = (char *) malloc(FIRSTFIELD_LENGTH + 1);
+  char *secondField = (char *) malloc(SECONDFIELD_LENGTH + 1);
+  char *currentLine = (char *) malloc(MAXIMUM_DATABASE_ENTRY_LENGTH + 1);
+
+  int foundAMatch = 0;
+  int validHostName = 0;
+
+  *no_of_entries = 0;
+
+  while (fgets(currentLine, MAXIMUM_DATABASE_ENTRY_LENGTH,
+         filePointer) != NULL ) {
+
+    firstField = strtok(currentLine, ":");
+    secondField = strtok(NULL, ":");
+    if ( (strcmp(firstField, "hostname") != 0) ||
+   (strcmp(secondField, host_name) != 0 ) ) {
+      continue;
+    }
+    
+    validHostName = 1;
+
+    while ( fgets(currentLine, MAXIMUM_DATABASE_ENTRY_LENGTH, 
+      filePointer) !=  NULL ) {
+
+      firstField = strtok(currentLine, ":");
+      if (( secondField = strtok(NULL, ":")) == NULL) {
+  break;
+      }
+
+      // If we've reached here, the hostname is valid, and there has been a match.
+      if (!foundAMatch) {
+  foundAMatch = 1;
+      }
+
+      userList[*no_of_entries] = (char *) malloc(100);
+      sprintf(userList[(*no_of_entries)++],"%s:%s", firstField, secondField);
+
+    }
+    break;
+  }
+
+  if (!validHostName) {
+    return nullPtr;
+  } else if (!foundAMatch) {
+    // Make userList nonNull ptr
+    userList[0] = (char*) '1';
+  }
+  return userList;
 }
 
 void close_database (void) {
-  // fclose(filePointer);
-  int i;
-  for (i = 0; i < numEntries; i++)
-  {
-    free(songList[i]);
-  }
-  numEntries = 0;
   fclose(filePointer);
 }
-
-void intializeSongList()
-{
-  char* currentLine = (char *) malloc(MAXIMUM_DATABASE_ENTRY_LENGTH + 1);
-
-  // for holding song name when going through the database
-  char* firstField = malloc(SONG_LENGTH + 1);
-
-  // intialize the number of entries
-  numEntries = 0;
-
-  // loop through the entries on each line of the database until null is encountered
-  while (fgets(currentLine, MAXIMUM_DATABASE_ENTRY_LENGTH, filePointer) !=  NULL ) 
-  { 
-      // retrieve the name of the song at the current line
-      firstField = strtok(currentLine, ":");
-
-      // allocate space for a song in the classwide variable
-      songList[numEntries] = (char *) malloc(SONG_LENGTH + 2); 
-
-      // add a song and its SHA to the list of entries in the classwide variable
-      sprintf(songList[(numEntries)++],"%s:%s", firstField);
-
-  }
-}
-
-/****************************************************************************************************************
-* Takes as a parameter a location in which to store the number of files in the database.
-*
-* Returns an array containing the song names in the database
-****************************************************************************************************************/
-char** lookup_songs (int* no_of_entries) 
-{
-  // specify the number of songs in the list into the passed in variable
-  *no_of_entries = numEntries;
-
-  // return the location to where the contents of the local database where stored
-  return songList;
-}
-
-
-
-
