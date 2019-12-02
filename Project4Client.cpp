@@ -39,9 +39,6 @@ void sendLOGON(int sock)
 	char password[SHORT_BUFFSIZE];
 	uint8_t hash[32];
 
-	// Clear new line from using scanf	
-	getchar();
-
 	// Parse username input
  	printf("Enter your username: ");
 	fgets(username, SHORT_BUFFSIZE, stdin);
@@ -208,6 +205,8 @@ int main (int argc, char *argv[])
 		DieWithError((char*) "SetupTCPClientSocket() failed");
 
 
+	sendLOGON(sock);
+
 	// ask user for command (list, diff, sync, leave)
 	cout << "Enter Command in Small Case: " << endl;
 	char* command = (char*) malloc(5); 
@@ -215,14 +214,7 @@ int main (int argc, char *argv[])
 
 	while (strcmp(command, "leave") != 0)
 	{
-		if (strcmp(command, "logon") == 0)
-		{
-			sendLOGON(sock);
-			// Switch commands
-			cout << "Enter Command in Small Case: " << endl;
-			scanf("%s", command);
-		}
-		else if (strcmp(command, "list") == 0)
+		if (strcmp(command, "list") == 0)
 		{
 
 		}
