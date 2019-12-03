@@ -27,6 +27,8 @@
 #define	LISTENQ		1024	/* 2nd argument to listen() */
 #define SHORT_BUFFSIZE  100     /* For messages I know are short */
 #define SHA_LENGTH 128 /* length of SHA-256 */
+#define SONG_LENGTH 255
+#define MAX_SONGNAME_LENGTH 255 /* max song name length */
 
 
 #define LISTType "LIST"
@@ -42,3 +44,6 @@ inline void DieWithError(const char *errorMessage){
 /*Error handling function */
 int SetupTCPClientSocket(const char *host, const char *service);
 void HandleClient(int cliSock);
+const char* byte_to_binary(uint8_t x, char* binary);
+unsigned long retrieveLength(char* packet);
+unsigned long receiveResponse(int sock, char* response);

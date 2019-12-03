@@ -1,10 +1,11 @@
 
 #include "NetworkHeader.h"
 #include "WhoHeader.h"
-#define MAX_SONGNAME_LENGTH 255 /* max song name length */
 
 
 using namespace std;
+
+char* user_name;
 
 const char* byte_to_binary(uint8_t x, char* binary)
 {
@@ -66,7 +67,6 @@ unsigned long receiveResponse(int sock, char* response)
 
 		if (totalBytesRcvd == 4 + 2 + length_Message)
 		{
-			printf("ENTERED TOTAL!!!!\n");
 			response[totalBytesRcvd] = '\0';
 			return length_Message;
 		}
@@ -123,7 +123,7 @@ void HandleClient(int cliSock)
 			{	
 				int numEntries; // specifies number of songs
 				
-				char** songs = lookup_song_lists(&username, &numEntries);
+				char** songs = lookup_song_lists(user_name, &numEntries);
 
 				char listResponse[BUFFSIZE];
 				strcpy(listResponse, LISTType);
@@ -135,7 +135,8 @@ void HandleClient(int cliSock)
 					char** oneSong = songs+i;
 
 					// find the first occurence of ':'
-					int k; int firstIndex;
+					int k; 
+					int firstIndex = 0;
 					for (k = 0; k < MAX_SONGNAME_LENGTH+1; k++) // at most MAX_SONGNAME_LENGTH characters before first ':'
 					{
 						if ((*oneSong)[k] == ':')
@@ -157,6 +158,11 @@ void HandleClient(int cliSock)
 					}
 					//printf("songName: %s\n", songName); // debugging
 
+					// retrieve SHA 
+					char sha[SHA_LENGTH+1];
+					strcpy(sha, (*oneSong)+firstIndex+1);
+					//printf("SHA: %s\n", sha); // debugging
+
 
 					// store song name in listResponse packet
 					int j;
@@ -166,12 +172,20 @@ void HandleClient(int cliSock)
 						//printf("character appended: %c\n", songName[j]); // debugging
 					}
 
+					// store SHA listResponse packet
+					int y;
+					for (y = 0; y < SHA_LENGTH; y++) // 128 bytes used for SHA
+					{
+						listResponse[4 + 2 + i*(MAX_SONGNAME_LENGTH+SHA_LENGTH) + MAX_SONGNAME_LENGTH + y] = sha[y]; // 4 bytes for "LIST", 2 bytes for length field
+						//printf("character appended: %c\n", sha[y]); // debugging
+					}
+
 
 				}
 
 				// fill length field in 4th-5th bits of listResponse packet
-				listResponse[5] = (uint16_t)numEntries*(MAX_SONGNAME_LENGTH);
-				listResponse[4] = (uint16_t)numEntries*(MAX_SONGNAME_LENGTH) >> 8;
+				listResponse[5] = (uint16_t)numEntries*(MAX_SONGNAME_LENGTH+SHA_LENGTH);
+				listResponse[4] = (uint16_t)numEntries*(MAX_SONGNAME_LENGTH+SHA_LENGTH) >> 8;
 
 				/*//print listResponse DEBUGGING
 				int j;
@@ -205,6 +219,7 @@ void HandleClient(int cliSock)
 				char *password;
 				username = strtok(buffer, "@");
 				username = strtok(NULL, "@");
+				//std::string username_temp(username);
 				password = strtok(NULL, "@");
 					
 				// Open and parse database file for username
@@ -232,7 +247,9 @@ void HandleClient(int cliSock)
 				char identityBuffer[5];
 				if (strcmp(db_password, password) == 0) 
 				{
-					strncat(identityBuffer, "True", 4);				
+					strncat(identityBuffer, "True", 4);	
+					//user_name = (char *) username_temp;	
+					user_name = username;		
 				}
 				else 
 				{
