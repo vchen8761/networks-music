@@ -7,6 +7,7 @@
 using namespace std;
 
 string user_name2;
+char** listOfSongs;
 
 static void hash_to_string(char string[65], const uint8_t hash[32])
 {
@@ -25,23 +26,17 @@ unsigned int getLength(char* field)
 	return strtoul(firstBin, NULL, 2);
 }	
 
+//These are for Project4Client.cpp
+
 // Constructs and sends LIST message to server.
 void sendLIST(int sock)
 {
 	// construct LIST message
 	char listMessage[BUFFSIZE];
 	strcpy(listMessage, LISTType);
-	// length field is zero
-	listMessage[4] = 0x0;
-	listMessage[5] = 0x0;
-
-	// printf("LIST TYPE??: ");
-	// int i;
-	// for (i = 0; i < 4; i++)
-	// {
-	// 	printf("%c", listMessage[i]);
-	// }
-	// printf("\n");
+	strncat(listMessage, ":", 1);
+	//strncat(listMessage, user_name2, strlen(user_name2));
+	strncat(listMessage, "\n", 1);
 	
 	// send LIST message to server
 	ssize_t numBytesSent = send(sock, listMessage, 4+2, 0);
@@ -50,6 +45,73 @@ void sendLIST(int sock)
 		DieWithError("send() failed");
 	}
 }
+
+
+// Receive the song list
+// uses global variable listOfSongs
+void receiveSongList(int sock)
+{
+
+	// receive response message from server
+	char buffer[BUFFSIZE];
+	ssize_t numBytesRcvd = 0;
+	cout << "in receive song list" << endl;
+
+	while (buffer[numBytesRcvd - 1] != '\n')		
+	{
+		numBytesRcvd = recv(sock, buffer, BUFFSIZE-1, 0);
+		//printf("numBytesRcvd: %zu\n", numBytesRcvd); // debugging
+		//printf("buffer received: %s\n", buffer); // debugging
+		if (numBytesRcvd < 0)
+			DieWithError((char*) "recv() failed");
+		else if (numBytesRcvd == 0)
+			DieWithError((char*) "recv() failed: connection closed prematurely");
+		buffer[numBytesRcvd] = '\0'; // append null-character
+	}
+	cout << "between" << endl;
+
+
+	char* song = strtok(buffer, ":");
+	int i = 0;
+
+	while(strcmp(song, "\n") != 0)
+	{
+		listOfSongs[i] = song;
+		printf("%s\n", listOfSongs[i]);
+		fflush(stdout);
+		song = strtok(NULL, ":");
+		song = strtok(NULL, ":");
+		i++;
+	}
+}
+
+
+// // Constructs and sends LIST message to server.
+// void sendLIST(int sock)
+// {
+// 	// construct LIST message
+// 	char listMessage[BUFFSIZE];
+// 	strcpy(listMessage, LISTType);
+// 	// length field is zero
+// 	strncat(listMessage,"\n",1);
+// 	//listMessage[4] = '\n';
+// 	cout << "inside sendLIST" << endl;
+
+// 	// printf("LIST TYPE??: ");
+// 	// int i;
+// 	// for (i = 0; i < 4; i++)
+// 	// {
+// 	// 	printf("%c", listMessage[i]);
+// 	// }
+// 	// printf("\n");
+	
+// 	// send LIST message to server
+// 	ssize_t numBytesSent = send(sock, listMessage, strlen(listMessage), 0);
+// 	if (numBytesSent < 0)
+// 	{
+// 		DieWithError("send() failed");
+// 	}
+// }
 
 // prints every song and SHA combination from listResponse.
 // numEntries represents number of song in listResponse.
@@ -303,11 +365,13 @@ int main (int argc, char *argv[])
 		{
 			// send LIST message to server
 			sendLIST(sock);
-
+			cout << "out of sendList" << endl;
 			// receive listResponse from server
-			char listResponse[BUFFSIZE];
-			unsigned long length_Message = receiveResponse(sock, listResponse);
-			printLIST(listResponse, length_Message);
+			//char listResponse[BUFFSIZE];
+			receiveSongList(sock);
+
+			cout << "after receive response" << endl;
+			//printLIST(listResponse, length_Message);
 
 			// read another command from user
 			printf("Enter Another Command in Small Case: ");
@@ -350,7 +414,7 @@ int main (int argc, char *argv[])
 	}
 	// send LEAVE message to server
 	sendLEAVE(sock);
-	exit(0);
+	//exit(0);
 
 }
 
