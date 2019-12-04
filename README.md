@@ -34,7 +34,9 @@ SHA-256 is implemented using: https://github.com/amosnier/sha-2
 Testing:
 This program was tested on mathcs machines 01,02, and 03. 
 The sample logon credentials are:
+
 username: user1
+
 password: password123
 
 
