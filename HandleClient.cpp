@@ -218,7 +218,7 @@ void HandleClient(int cliSock)
 				char *password;
 				username = strtok(buffer, "@");
 				username = strtok(NULL, "@");
-				std::string username_temp(username);
+				//std::string username_temp(username);
 				password = strtok(NULL, "@");
 					
 				// Open and parse database file for username
@@ -248,7 +248,7 @@ void HandleClient(int cliSock)
 				if (strcmp(db_password, password) == 0) 
 				{
 					strncat(identityBuffer, "True", 4);				
-					user_name = username_temp;	
+					user_name = username;	
 				}
 				else 
 				{
