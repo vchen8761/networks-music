@@ -5,9 +5,9 @@ GetMyMusic is a networked application that enables multiple machines to ensure t
 How to run:
 Run the client and server on different mathcs machines using the following command line arguments:
 
-./Project4Client -s <Server IP>:<Port>
+./Project4Client -s [Server IP]:[Port]
   
-./Project4Server -p <Port>
+./Project4Server -p [Port]
   
 The client with prompt the user to logon using their username and password. 
 The user is assumed to have an account because REGISTER option is not implemented.
