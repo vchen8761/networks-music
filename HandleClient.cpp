@@ -15,6 +15,7 @@ void HandleClient(int cliSock)
 	{
 		// receive response message from server
 		char buffer[BUFFSIZE];
+		memset(buffer, 0, BUFFSIZE);
 		ssize_t numBytesRcvd = 0;
 
 		while (buffer[numBytesRcvd - 1] != '\n')		
@@ -92,6 +93,7 @@ void HandleClient(int cliSock)
 	
 			//TODO: Possible buffer overflow when identity buffer is greater	
 			char identityBuffer[5];
+			memset(identityBuffer, 0, 5);
 			if (strcmp(db_password, password) == 0) 
 			{
 				strncat(identityBuffer, "True", 4);				
@@ -134,13 +136,21 @@ void HandleClient(int cliSock)
 				char **data = lookup_user_names(username, num);
 
 				// If user not found in database handle case.
+				if (no_of_entries == 0) {
+						char emptyBuffer[1];
+						strncpy(emptyBuffer, "\n", 1);
+						send(cliSock, emptyBuffer, strlen(emptyBuffer), 0);
+						continue;
+				}
 
 				// Parse salt from data received from database
 			  char *salt = data[0];
 				char temp[SHORT_BUFFSIZE];
+				memset(temp, 0, SHORT_BUFFSIZE);
 				strncat(temp, salt, strlen(salt));
 				salt = strtok(temp, ":");
 				char saltBuffer[SHORT_BUFFSIZE];
+				memset(saltBuffer, 0, SHORT_BUFFSIZE);
 				strncat(saltBuffer, salt, strlen(salt));
 				strncat(saltBuffer, "\n", 1);
 
