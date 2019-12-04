@@ -154,9 +154,6 @@ void sendLOGON(int sock)
 	char password[SHORT_BUFFSIZE];
 	uint8_t hash[32];
 
-	// Clear new line from using scanf	
-	getchar();
-
 	// Parse username input
  	printf("Enter your username: ");
 	fgets(username, SHORT_BUFFSIZE, stdin);
@@ -171,6 +168,7 @@ void sendLOGON(int sock)
 	
 	// Request salt from server based on username
 	char saltBuffer[SHORT_BUFFSIZE];
+	memset(saltBuffer, 0, SHORT_BUFFSIZE);
 	ssize_t stringLen = strlen(username); 
 	strncat(saltBuffer, "SALT", 4);
 	strncat(saltBuffer, "@", 1);
@@ -184,6 +182,7 @@ void sendLOGON(int sock)
 	
 	// Receive salt
 	char saltArray[SHORT_BUFFSIZE];
+	memset(saltArray, 0, SHORT_BUFFSIZE);
 	ssize_t numBytes = 0;
 	// Receive until new line character 
 	while (saltArray[numBytes - 1] != '\n') {
@@ -198,6 +197,12 @@ void sendLOGON(int sock)
 	saltArray[strlen(saltArray) - 1] = '\0';
 	printf("Salt: %s\n", saltArray);
 
+	char empty[SHORT_BUFFSIZE];
+	if(strcmp(saltArray, empty) == 0) {
+		printf("%s\n", "Incorrect credentials");
+		return;
+	}
+
 	//Concatenate password and salt
 	strncat(password, saltArray, strlen(saltArray));
 	memset(saltArray, 0, SHORT_BUFFSIZE);
@@ -209,6 +214,7 @@ void sendLOGON(int sock)
 	// Construct buffer with command, username, hashed_password
 	// (seperated by @)
 	char logon_info[BUFFSIZE];
+	memset(logon_info, 0, BUFFSIZE);
 	strncat(logon_info, "LOGON", 5);
 	strncat(logon_info, "@", 1);
  	strncat(logon_info, username, strlen(username));
@@ -227,6 +233,7 @@ void sendLOGON(int sock)
 
 	// RECEIVE ANSWER FROM SERVER: Is password hash correct or not?
 	char identityBuffer[SHORT_BUFFSIZE];
+	memset(identityBuffer, 0, SHORT_BUFFSIZE);
 	numBytes = 0;
 	// Receive until new line character 
 	while (identityBuffer[numBytes - 1] != '\n') {
