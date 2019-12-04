@@ -1,4 +1,3 @@
-
 #include "NetworkHeader.h"
 #include "WhoHeader.h"
 
@@ -88,7 +87,6 @@ void HandleClient(int cliSock)
 	{
 			// receive response message from server
 			char buffer[BUFFSIZE];
-			memset(buffer, 0, BUFFSIZE);
 			ssize_t numBytesRcvd = 0;
 
 			while (buffer[numBytesRcvd - 1] != '\n')		
@@ -197,7 +195,7 @@ void HandleClient(int cliSock)
 				
 				strncat(identityBuffer, "\n", 1);
 
-				// Send authenticate to client
+				// Send salt to client
 				ssize_t numBytesSent = send(cliSock, identityBuffer, strlen(identityBuffer), 0);
 				if (numBytesSent < 0)
 		  		DieWithError((char*)"send() failed");	
@@ -226,21 +224,13 @@ void HandleClient(int cliSock)
 					char **data = lookup_user_names(username, num);
 
 					// If user not found in database handle case.
-					if (no_of_entries == 0) {
-						char emptyBuffer[1];
-						strncpy(emptyBuffer, "\n", 1);
-						send(cliSock, emptyBuffer, strlen(emptyBuffer), 0);
-						continue;
-					}
 
 					// Parse salt from data received from database
-				  	char *salt = data[0];
+				  char *salt = data[0];
 					char temp[SHORT_BUFFSIZE];
-					memset(temp, 0, SHORT_BUFFSIZE);
 					strncat(temp, salt, strlen(salt));
 					salt = strtok(temp, ":");
 					char saltBuffer[SHORT_BUFFSIZE];
-					memset(saltBuffer, 0, SHORT_BUFFSIZE);
 					strncat(saltBuffer, salt, strlen(salt));
 					strncat(saltBuffer, "\n", 1);
 
