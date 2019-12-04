@@ -5,7 +5,7 @@
 
 using namespace std;
 
-string user_name;
+string user_name2;
 
 static void hash_to_string(char string[65], const uint8_t hash[32])
 {
@@ -17,7 +17,6 @@ static void hash_to_string(char string[65], const uint8_t hash[32])
 
 unsigned int getLength(char* field)
 {
-	// printf("INT VERSION OF GETLENGTH GOT CALLED!!!!\n");
 	char firstBin[17]; char secondBin[9];
 	byte_to_binary(field[0], firstBin);
 	byte_to_binary(field[1], secondBin);
@@ -83,7 +82,7 @@ void sendLEAVE(int sock)
 // First two bytes: length field, then song name, SHA, song name, SHA,...
 void printDIFF(char* packet, unsigned long numSongs)
 {
-		int i;
+		unsigned long i;
 		for (i = 0; i < numSongs; i++)
 		{
 			// retrieve song name from packet
@@ -192,7 +191,7 @@ void sendLOGON(int sock)
 	// If correct credentials then prints True, otherwise prints False.
 	printf("%s", identityBuffer);
 	if (strcmp(identityBuffer, "True\n") == 0)
-		user_name = username;
+		user_name2 = username;
 }
 
 
@@ -275,15 +274,15 @@ int main (int argc, char *argv[])
 	if (sock < 0)
 		DieWithError((char*) "SetupTCPClientSocket() failed");
 
-	while (user_name == "")
+	while (user_name2 == "")
 		sendLOGON(sock);
 
-	cout << user_name << endl;
+	cout << user_name2 << endl;
 
 	// open database file
 	//open_database("username_songs.dat");
 
-	// ask user for command (list, diff, sync, leave)
+	// ask user for command 
 	cout << "Enter Command in Small Case: " << endl;
 	char* command = (char*) malloc(5); 
 	scanf("%s", command);

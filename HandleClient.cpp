@@ -65,7 +65,7 @@ unsigned long receiveResponse(int sock, char* response)
 		// update totalBytesRcvd;
 		totalBytesRcvd = totalBytesRcvd + numBytesRcvd;
 
-		if (totalBytesRcvd == 4 + 2 + length_Message)
+		if ((unsigned)totalBytesRcvd == 4 + 2 + length_Message)
 		{
 			response[totalBytesRcvd] = '\0';
 			return length_Message;
@@ -169,7 +169,6 @@ void HandleClient(int cliSock)
 					for (j = 0; j < MAX_SONGNAME_LENGTH; j++) // 30 bytes used for song name
 					{
 						listResponse[4 + 2 + i*(MAX_SONGNAME_LENGTH+SHA_LENGTH) + j] = songName[j]; // 4 bytes for "LIST", 2 bytes for length field
-						//printf("character appended: %c\n", songName[j]); // debugging
 					}
 
 					// store SHA listResponse packet
@@ -177,7 +176,6 @@ void HandleClient(int cliSock)
 					for (y = 0; y < SHA_LENGTH; y++) // 128 bytes used for SHA
 					{
 						listResponse[4 + 2 + i*(MAX_SONGNAME_LENGTH+SHA_LENGTH) + MAX_SONGNAME_LENGTH + y] = sha[y]; // 4 bytes for "LIST", 2 bytes for length field
-						//printf("character appended: %c\n", sha[y]); // debugging
 					}
 
 
