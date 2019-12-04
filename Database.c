@@ -29,28 +29,28 @@ char **lookup_user_names (char *host_name, int *no_of_entries) {
   *no_of_entries = 0;
 
   while (fgets(currentLine, MAXIMUM_DATABASE_ENTRY_LENGTH,
-	       filePointer) != NULL ) {
+         filePointer) != NULL ) {
 
     firstField = strtok(currentLine, ":");
     secondField = strtok(NULL, ":");
     if ( (strcmp(firstField, "hostname") != 0) ||
-	 (strcmp(secondField, host_name) != 0 ) ) {
+   (strcmp(secondField, host_name) != 0 ) ) {
       continue;
     }
     
     validHostName = 1;
 
     while ( fgets(currentLine, MAXIMUM_DATABASE_ENTRY_LENGTH, 
-		  filePointer) !=  NULL ) {
+      filePointer) !=  NULL ) {
 
       firstField = strtok(currentLine, ":");
       if (( secondField = strtok(NULL, ":")) == NULL) {
-	break;
+  break;
       }
 
       // If we've reached here, the hostname is valid, and there has been a match.
       if (!foundAMatch) {
-	foundAMatch = 1;
+  foundAMatch = 1;
       }
 
       userList[*no_of_entries] = (char *) malloc(100);
@@ -72,7 +72,3 @@ char **lookup_user_names (char *host_name, int *no_of_entries) {
 void close_database (void) {
   fclose(filePointer);
 }
-
-
-
-

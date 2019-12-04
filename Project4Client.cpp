@@ -1,11 +1,12 @@
 #include "NetworkHeader.h"
+#include "WhoHeader.h"
 #include "sha-256.c"
 #include <time.h>
 #include <string.h>
 
 using namespace std;
 
-string user_name;
+string user_name2;
 
 static void hash_to_string(char string[65], const uint8_t hash[32])
 {
@@ -13,7 +14,50 @@ static void hash_to_string(char string[65], const uint8_t hash[32])
 	for (i = 0; i < 32; i++) {
 		string += sprintf(string,"%02x", hash[i]);
 	}
+}
+
+unsigned int getLength(char* field)
+{
+	char firstBin[17]; char secondBin[9];
+	byte_to_binary(field[0], firstBin);
+	byte_to_binary(field[1], secondBin);
+	strcat(firstBin, secondBin);
+	return strtoul(firstBin, NULL, 2);
 }	
+
+// Constructs and sends LIST message to server.
+void sendLIST(int sock)
+{
+	// construct LIST message
+	char listMessage[BUFFSIZE];
+	strcpy(listMessage, LISTType);
+	// length field is zero
+	listMessage[4] = 0x0;
+	listMessage[5] = 0x0;
+
+	// printf("LIST TYPE??: ");
+	// int i;
+	// for (i = 0; i < 4; i++)
+	// {
+	// 	printf("%c", listMessage[i]);
+	// }
+	// printf("\n");
+	
+	// send LIST message to server
+	ssize_t numBytesSent = send(sock, listMessage, 4+2, 0);
+	if (numBytesSent < 0)
+	{
+		DieWithError("send() failed");
+	}
+}
+
+// prints every song and SHA combination from listResponse.
+// numEntries represents number of song in listResponse.
+void printLIST(char* listResponse, unsigned long numEntries)
+{
+	// print the names of the songs in the server to stdout
+	//// need to implement
+}
 
 // Constructs and sends LEAVE message to server.
 void sendLEAVE(int sock)
@@ -33,6 +77,24 @@ void sendLEAVE(int sock)
 	    DieWithError((char*)"send() failed");
 	
 }
+
+// Prints every song names in given packet.
+// numSongs represents number of songs in packet
+// First two bytes: length field, then song name, SHA, song name, SHA,...
+void printDIFF(char* packet, unsigned long numSongs)
+{
+		unsigned long i;
+		for (i = 0; i < numSongs; i++)
+		{
+			// retrieve song name from packet
+			char songName[MAX_SONGNAME_LENGTH+1];
+			strncpy(songName, packet + 2 + i*(MAX_SONGNAME_LENGTH+SHA_LENGTH), MAX_SONGNAME_LENGTH);
+			songName[MAX_SONGNAME_LENGTH] = '\0';
+
+			printf("%s\n", songName);
+		}
+		printf("\n");
+} 
 
 void sendLOGON(int sock)
 {
@@ -138,8 +200,10 @@ void sendLOGON(int sock)
 	printf("%s", identityBuffer);
 
 	if (strcmp(identityBuffer, "True\n") == 0)
-		user_name = username;
+		user_name2 = username;
+
 }
+
 
 int SetupTCPClientSocket(const char *host, const char *service)
 {
@@ -220,12 +284,15 @@ int main (int argc, char *argv[])
 	if (sock < 0)
 		DieWithError((char*) "SetupTCPClientSocket() failed");
 
-	while (user_name == "")
+	while (user_name2 == "")
 		sendLOGON(sock);
 
-	cout << user_name << endl;
+	cout << user_name2 << endl;
 
-	// ask user for command (list, diff, sync, leave)
+	// open database file
+	//open_database("username_songs.dat");
+
+	// ask user for command 
 	cout << "Enter Command in Small Case: " << endl;
 	char* command = (char*) malloc(5); 
 	scanf("%s", command);
@@ -234,10 +301,45 @@ int main (int argc, char *argv[])
 	{
 		if (strcmp(command, "list") == 0)
 		{
+			// send LIST message to server
+			sendLIST(sock);
+
+			// receive listResponse from server
+			char listResponse[BUFFSIZE];
+			unsigned long length_Message = receiveResponse(sock, listResponse);
+			printLIST(listResponse, length_Message);
+
+			// read another command from user
+			printf("Enter Another Command in Small Case: ");
+			scanf("%s", command);
 
 		}
 		else if (strcmp(command, "diff") == 0)
 		{
+			sendLIST(sock);
+			// receive listResponse from server
+			char listResponse[BUFFSIZE];
+			unsigned long length_Message = receiveResponse(sock, listResponse);
+
+			// calculate different song files between client and server
+			char* clientSongs = compareClientToServer(listResponse+6, length_Message); // songs that are in client but not in server
+			char* serverSongs = compareServerToClient(listResponse+6, length_Message); // songs that are in server but not in client
+
+			// retrieve lengths of clientSongs and serverSongs
+			unsigned long lengthClient = getLength(clientSongs);
+			unsigned long lengthServer = getLength(serverSongs);
+
+			// print songs in client but not in server
+			printf("Songs in client but not in server: \n");
+			printDIFF(clientSongs, lengthClient);
+
+			// print songs in server but not in client
+			printf("Songs in server but not in client: \n");
+			printDIFF(serverSongs, lengthServer);
+
+			// wait for another command
+			printf("Enter Another Command in Small Case: ");
+			scanf("%s", command);
 
 		}
 		else if (strcmp(command, "pull") == 0)
