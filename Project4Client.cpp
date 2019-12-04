@@ -6,6 +6,7 @@
 using namespace std;
 
 char* user_name;
+char** listOfSongs;
 
 static void hash_to_string(char string[65], const uint8_t hash[32])
 {
@@ -51,6 +52,42 @@ void sendLIST(int sock)
 }
 
 
+// Receive the song list
+// uses global variable listOfSongs
+void receiveSongList(int sock)
+{
+
+	// receive response message from server
+	char buffer[BUFFSIZE];
+	ssize_t numBytesRcvd = 0;
+
+	while (buffer[numBytesRcvd - 1] != '\n')		
+	{
+		numBytesRcvd = recv(sock, buffer, BUFFSIZE-1, 0);
+		//printf("numBytesRcvd: %zu\n", numBytesRcvd); // debugging
+		//printf("buffer received: %s\n", buffer); // debugging
+		if (numBytesRcvd < 0)
+			DieWithError((char*) "recv() failed");
+		else if (numBytesRcvd == 0)
+			DieWithError((char*) "recv() failed: connection closed prematurely");
+		buffer[numBytesRcvd] = '\0'; // append null-character
+	}
+
+	char* song = strtok(buffer, ":");
+	int i = 0;
+
+	while(strcmp(song, "\n") != 0)
+	{
+		listOfSongs[i] = song;
+		printf("%s\n", listOfSongs[i]);
+		fflush(stdout);
+		song = strtok(NULL, ":");
+		song = strtok(NULL, ":");
+		i++;
+	}
+
+
+}
 
 
 

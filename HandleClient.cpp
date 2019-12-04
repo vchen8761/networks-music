@@ -118,103 +118,24 @@ void HandleClient(int cliSock)
 			printf("\nType of message received: %s\n", typeField); // debugging
 			fflush(stdout);
 
-
-
-
-
-
-
-
 			// Received LIST message
 			if (strcmp(typeField, LISTType) == 0)
 			{	
 				int numEntries; // specifies number of songs
 				
-				char** songs = lookup_song_lists(user_name, &numEntries);
+				char** songs = lookup_song_lists(user_name, &numEntries);	// get songs from database
 
-				char listResponse[BUFFSIZE];
-				strcpy(listResponse, LISTType);
-				strncat(listResponse, ":", 1);
-				strncat(listResponse, user_name, strlen(user_name));
-				strncat(listResponse, "\n", 1);
+				char listResponse[BUFFSIZE];	// create message
+
+				for (int i = 0; i < numEntries; ++i)
+				{
+					strncat(listResponse, songs[i], strlen(songs[i]));		// Go through each song and concatenate
+				}
+
+				strncat(listResponse, "\n", 1); // terminate with new line 
 				
-
-
-				
-
-
-
-
-
-				// // find song names from database and store in listResponse packet
-				// int i;
-				// for (i = 0; i < numEntries; i++)
-				// {
-				// 	char** oneSong = songs+i;
-
-				// 	// find the first occurence of ':'
-				// 	int k; 
-				// 	int firstIndex = 0;
-				// 	for (k = 0; k < MAX_SONGNAME_LENGTH+1; k++) // at most MAX_SONGNAME_LENGTH characters before first ':'
-				// 	{
-				// 		if ((*oneSong)[k] == ':')
-				// 		{
-				// 			firstIndex = k;
-				// 			break;
-				// 		}
-				// 	}
-				
-				
-				// 	// retrieve song name
-				// 	char songName[MAX_SONGNAME_LENGTH+1];
-				// 	strncpy(songName, (*oneSong), firstIndex);
-				// 	// append null characters for the rest of songName
-				// 	int r;
-				// 	for (r = MAX_SONGNAME_LENGTH; r >= firstIndex; r--)
-				// 	{
-				// 		songName[r] = '\0';
-				// 	}
-				// 	//printf("songName: %s\n", songName); // debugging
-
-				// 	// retrieve SHA 
-				// 	char sha[SHA_LENGTH+1];
-				// 	strcpy(sha, (*oneSong)+firstIndex+1);
-				// 	//printf("SHA: %s\n", sha); // debugging
-
-
-				// 	// store song name in listResponse packet
-				// 	int j;
-				// 	for (j = 0; j < MAX_SONGNAME_LENGTH; j++) // 30 bytes used for song name
-				// 	{
-				// 		listResponse[4 + 2 + i*(MAX_SONGNAME_LENGTH+SHA_LENGTH) + j] = songName[j]; // 4 bytes for "LIST", 2 bytes for length field
-				// 		//printf("character appended: %c\n", songName[j]); // debugging
-				// 	}
-
-				// 	// store SHA listResponse packet
-				// 	int y;
-				// 	for (y = 0; y < SHA_LENGTH; y++) // 128 bytes used for SHA
-				// 	{
-				// 		listResponse[4 + 2 + i*(MAX_SONGNAME_LENGTH+SHA_LENGTH) + MAX_SONGNAME_LENGTH + y] = sha[y]; // 4 bytes for "LIST", 2 bytes for length field
-				// 		//printf("character appended: %c\n", sha[y]); // debugging
-				// 	}
-
-
-				// }
-
-				// // fill length field in 4th-5th bits of listResponse packet
-				// listResponse[5] = (uint16_t)numEntries*(MAX_SONGNAME_LENGTH+SHA_LENGTH);
-				// listResponse[4] = (uint16_t)numEntries*(MAX_SONGNAME_LENGTH+SHA_LENGTH) >> 8;
-
-				// /*//print listResponse DEBUGGING
-				// int j;
-				// for (j = 0; j < 4 + 2 + numEntries*(MAX_SONGNAME_LENGTH+SHA_LENGTH); j++)
-				// {
-				// 	printf("%c", listResponse[j]);
-				// }
-				// printf("\n");*/
-
 				// send listResponse packet
-				int length_response = 4 + 2 + numEntries*(MAX_SONGNAME_LENGTH); // length of listResponse packet
+				int length_response = numEntries*(MAX_SONGNAME_LENGTH); // length of listResponse packet
 				ssize_t numBytesSent = send(cliSock, listResponse, length_response, 0);
 				if (numBytesSent < 0)
 				{
@@ -222,14 +143,6 @@ void HandleClient(int cliSock)
 				}
 				
 			}
-
-
-
-
-
-
-
-
 
 			// Received PULL message
 			else if (strcmp(typeField, PULLType) == 0)
