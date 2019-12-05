@@ -1,4 +1,3 @@
-
 #include "NetworkHeader.h"
 #include "WhoHeader.h"
 #include <string.h>
@@ -56,57 +55,6 @@ unsigned long receiveResponse(int sock, char* response)
 			buffer[strlen(buffer) - 1] = '\0';
 			return strlen(buffer);
 }
-
-
-// 	// receive response message from server
-// 	int retrievedLength = 0; // boolean representing whether we have retrieved value from length field
-// 	unsigned long length_Message = 0; // 2 byte field contains length of message
-// 	int totalBytesRcvd = 0; // total number of bytes received
-// 	cout << "in receiveresponse" << endl;
-// 	for (;;)
-// 	{
-// 		char buffer[BUFFSIZE];
-// 		cout << "in outer for loop" << endl;
-
-
-// 		ssize_t numBytesRcvd = recv(sock, buffer, BUFFSIZE-1, 0);
-// 		//printf("numBytesRcvd: %zu\n", numBytesRcvd); // debugging
-// 		//printf("hello buffer received: %s\n", buffer); // debugging
-// 		if (numBytesRcvd < 0)
-// 			DieWithError("recv() failed");
-// 		else if (numBytesRcvd == 0)
-// 			DieWithError("recv() failed: connection closed prematurely");
-// 		buffer[numBytesRcvd] = '\0'; // append null-character
-
-// 		// append received buffer to response
-// 		int u;
-// 		for (u = totalBytesRcvd; u < totalBytesRcvd+numBytesRcvd; u++)
-// 		{
-// 			response[u] = buffer[u-totalBytesRcvd];
-// 		}
-// 		cout << "out of inner for" << endl;
-
-// 		// retrieve the length field from message. (located 4th-5th bytes)
-// 		if (!retrievedLength && numBytesRcvd >= 6)
-// 		{
-// 			length_Message = retrieveLength(response);
-
-// 			retrievedLength = 1;
-// 		}	
-// 		cout << "before return" << endl;
-
-// 		// update totalBytesRcvd;
-// 		totalBytesRcvd = totalBytesRcvd + numBytesRcvd;
-
-// 		if ((unsigned)totalBytesRcvd == 4 + 2 + length_Message)
-// 		{	
-// 			cout << "in return" << endl;
-// 			response[totalBytesRcvd] = '\0';
-// 			return length_Message;
-// 		}
-
-// 	}
-// }
 
 // receives and sets response packet to response
 void HandleClient(int cliSock)
@@ -192,90 +140,8 @@ void HandleClient(int cliSock)
 				{
 					DieWithError("send() failed");
 				}
-				// cout << "inside server list type" << endl;
-				// int numEntries; // specifies number of songs
-				
-				// char** songs = lookup_song_lists(user_name, &numEntries);
-
-				// char listResponse[BUFFSIZE];
-				// strcpy(listResponse, LISTType);
-
-				// // find song names from database and store in listResponse packet
-				// int i;
-				// for (i = 0; i < numEntries; i++)
-				// {
-				// 	char** oneSong = songs+i;
-
-				// 	// find the first occurence of ':'
-				// 	int k; 
-				// 	int firstIndex = 0;
-				// 	for (k = 0; k < MAX_SONGNAME_LENGTH+1; k++) // at most MAX_SONGNAME_LENGTH characters before first ':'
-				// 	{
-				// 		if ((*oneSong)[k] == ':')
-				// 		{
-				// 			firstIndex = k;
-				// 			break;
-				// 		}
-				// 	}
-				
-				
-				// 	// retrieve song name
-				// 	char songName[MAX_SONGNAME_LENGTH+1];
-				// 	strncpy(songName, (*oneSong), firstIndex);
-				// 	// append null characters for the rest of songName
-				// 	int r;
-				// 	for (r = MAX_SONGNAME_LENGTH; r >= firstIndex; r--)
-				// 	{
-				// 		songName[r] = '\0';
-				// 	}
-				// 	//printf("songName: %s\n", songName); // debugging
-
-				// 	// retrieve SHA 
-				// 	char sha[SHA_LENGTH+1];
-				// 	strcpy(sha, (*oneSong)+firstIndex+1);
-				// 	//printf("SHA: %s\n", sha); // debugging
-
-
-				// 	// store song name in listResponse packet
-				// 	int j;
-				// 	for (j = 0; j < MAX_SONGNAME_LENGTH; j++) // 30 bytes used for song name
-				// 	{
-				// 		listResponse[4 + 2 + i*(MAX_SONGNAME_LENGTH+SHA_LENGTH) + j] = songName[j]; // 4 bytes for "LIST", 2 bytes for length field
-				// 	}
-
-				// 	// store SHA listResponse packet
-				// 	int y;
-				// 	for (y = 0; y < SHA_LENGTH; y++) // 128 bytes used for SHA
-				// 	{
-				// 		listResponse[4 + 2 + i*(MAX_SONGNAME_LENGTH+SHA_LENGTH) + MAX_SONGNAME_LENGTH + y] = sha[y]; // 4 bytes for "LIST", 2 bytes for length field
-				// 	}
-
-
-				// }
-
-				// // fill length field in 4th-5th bits of listResponse packet
-				// listResponse[5] = (uint16_t)numEntries*(MAX_SONGNAME_LENGTH+SHA_LENGTH);
-				// listResponse[4] = (uint16_t)numEntries*(MAX_SONGNAME_LENGTH+SHA_LENGTH) >> 8;
-
-				// /*//print listResponse DEBUGGING
-				// int j;
-				// for (j = 0; j < 4 + 2 + numEntries*(MAX_SONGNAME_LENGTH+SHA_LENGTH); j++)
-				// {
-				// 	printf("%c", listResponse[j]);
-				// }
-				// printf("\n");*/
-
-				// // send listResponse packet
-				// int length_response = 4 + 2 + numEntries*(MAX_SONGNAME_LENGTH); // length of listResponse packet
-				// ssize_t numBytesSent = send(cliSock, listResponse, length_response, 0);
-				// if (numBytesSent < 0)
-				// {
-				// 	DieWithError("send() failed");
-				// }
 				
 			}
-
-
 			// Received PULL message
 			else if (strcmp(typeField, PULLType) == 0)
 			{
