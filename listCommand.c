@@ -44,11 +44,11 @@ char **lookup_song_lists (char *user_name, int *no_of_entries) {
 
     firstField = strtok(currentLine, ":");
     secondField = strtok(NULL, ":");
-    if ( (strcmp(firstField, "hostname") != 0) ||
-   (strcmp(secondField, user_name) != 0 ) ) {
+
+    if ( (strcmp(firstField, "hostname") != 0) || (strcmp(secondField, user_name) != 0 ) ) {
       continue;
     }
-    
+
     validHostName = 1;
 
     while ( fgets(currentLine, MAXIMUM_DATABASE_ENTRY_LENGTH, 
@@ -112,71 +112,7 @@ long int findSize(char file_name[])
     return res; 
 }
 
-/**************************************************************************************************************** 
-* Takes as a parameter the list of songs:SHA pairings to compare to our local database contents.
-*
-* Returns a list of songs:SHA pairings of files not stored on the server database based on SHA values. 
-*
-* Songs that are in client but not in server
-****************************************************************************************************************/
-char* compareClientToServer(char* inputBuffer, int numBufferEntries) 
-{
-  // current line of local database
-  char* currentLine = (char*) malloc(SONG_LENGTH + SHA_LENGTH + 1);
 
-  // allocate a variable for names in the buffer
-  char* name = (char*) malloc(SONG_LENGTH);
-  char* sha = (char*) malloc(SHA_LENGTH + 1);
-
-  // string to be returned containing songs
-  char* result = (char*) malloc(BUFFSIZE);
-
-  // pointer to a location in 'result' being added to 
-  char* ptr = result;
-
-  // move pointer past location that will store the length field
-  ptr += 2;
-
-  // number of songs currently in the array being returned
-  int numResults = 0; 
-
-
-  // go through the entire song list
-  int i;
-  for (i = 0; i < numEntries; i++)
-  {
-      // retrieve the current song and sha
-      strcpy(currentLine, userList[i]);
-
-      // get the name of the song only
-      name = strtok(currentLine, ":");
-
-      // retrieve the SHA of the song
-      sha = strtok(NULL, ":");
-
-      // if the song is not found in the database, add it to output buffer
-      if(listContainsSong(sha, inputBuffer, numBufferEntries/(SONG_LENGTH+SHA_LENGTH)) == 0) // FALSE
-      {
-        // add song name : SHA to result to be returned
-        strncpy(ptr, name, SONG_LENGTH); 
-
-        ptr += SONG_LENGTH;
-
-        strncpy(ptr, sha, SHA_LENGTH);
-        ptr += SHA_LENGTH;
-        printf("enter\n");
-        numResults++;
-      }
-  }
-//printf("numEntries %d\n", numResults);
-  // null terminate the result
-  strcat(result, "\0");
-
-  // add the length field to the first 2 bytes of result
-  convertLengthToTwoBytes(result, numResults);
-
-  return result;
-}
 
 /**************************************************************************************************************** 
 * Takes as a parameter the list of songs:SHA pairings to compare to our local database contents.

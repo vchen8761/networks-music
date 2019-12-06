@@ -20,7 +20,7 @@ Project4Server: $(SERVER_SRCS) $(SRCS) $(HDRS)
 	$(CC) $(CFLAGS) -o $@ $(SERVER_SRCS) $(SRCS) $(LFLAGS)
 
 Project4Client: $(CLIENT_SRCS) $(SRCS) $(HDRS)
-	$(CC) $(CFLAGS) -o $@ $(CLIENT_SRCS) $(SRCS) $(LFLAGS)
+	$(CC) $(CFLAGS) -o $@ $(CLIENT_SRCS) HandleClient.cpp $(SRCS) $(LFLAGS)
 
 clean:
 	-rm -f Project4Server Project4Client *.o
