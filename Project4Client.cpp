@@ -103,18 +103,22 @@ void receiveSongList(int sock)
 *
 * Songs that are in client but not in server
 ****************************************************************************************************************/
-char* compareClientToServer() 
+void compareClientToServer() 
 {
   int numClientEntries; // specifies number of songs
   char* chr = strdup(user_name2.c_str());
-  cout << "before look up song list" << endl;
+  std::string musicDirName = "username_songs_client.dat";
+  char *cmusicDirName = new char[musicDirName.length() + 1];
+  strcpy(cmusicDirName, musicDirName.c_str());
+  // open database file
+  open_database_song(cmusicDirName);
+  // cout << "before look up song list" << endl;
   char** clientSongs = lookup_song_lists(chr, &numClientEntries); // get songs from database
-  // BUG: cant come out of look up song list
-  cout << "after look up song list" << endl;
+  // cout << "after look up song list" << endl;
 
   close_database_song();
   free(chr);
-  cout << "after close song list" << endl;
+  // cout << "after close song list" << endl;
 
   // current line of local database
   char* currentLine = (char*) malloc(SONG_LENGTH + SHA_LENGTH + 1);
@@ -124,21 +128,15 @@ char* compareClientToServer()
   char* clientSha = (char*) malloc(SHA_LENGTH + 1);
 
   // string to be returned containing songs
-  char* result = (char*) malloc(BUFFSIZE);
-
-  // pointer to a location in 'result' being added to 
-  char* ptr = result;
-
-  // move pointer past location that will store the length field
-  ptr += 2;
+  char result[BUFFSIZE];
+  memset(result,0,BUFFSIZE);
 
   // number of songs currently in the array being returned
   int numResults = 0; 
 
-
   // go through the entire client song list
   int i;
-    cout << "before for loop" << endl;
+    // cout << "before for loop" << endl;
 
   for (i = 0; i < numClientEntries; i++)
   {
@@ -155,38 +153,31 @@ char* compareClientToServer()
       char* currentLine2 = (char*) malloc(SONG_LENGTH + SHA_LENGTH + 1);
       int k;
       bool found = false;
-        cout << "before inner for loop" << endl;
-
+        // cout << "before inner for loop" << endl;
+        // cout << "server Entries" << serverNumEntries << endl;
       for(k = 0; k < serverNumEntries; k++)
       {	
 
+      	// char* songname = strtok(listOfSongs,":")
+      	// char* filesize = strtok(NULL, ":")
       	strcpy(currentLine2, listOfSongs[k]);
+      	// cout << "server song:" << listOfSongs[k] << endl;
       	strtok(currentLine2, ":");
 
       	if(strtok(NULL, ":") == clientSha){
       		found = true;
       	}
       }
-      if(found == false) // FALSE
+      if(found == false) 
       {
         // add song name : SHA to result to be returned
-        strncpy(ptr, name, SONG_LENGTH); 
-
-        ptr += SONG_LENGTH;
-
-        strncpy(ptr, clientSha, SHA_LENGTH);
-        ptr += SHA_LENGTH;
+        strncat(result, name, strlen(name)); 
         numResults++;
       }
   }
-	//printf("numEntries %d\n", numResults);
-  // null terminate the result
-  strcat(result, "\0");
-
-  // add the length field to the first 2 bytes of result
-  convertLengthToTwoBytes(result, numResults);
-
-  return result;
+  cout << "songs in client but not in server" << endl;
+  printf("%s",result);
+  cout << endl;
 }
 
 
@@ -198,11 +189,16 @@ char* compareClientToServer()
 *
 * Songs that are in server but not in client 
 ****************************************************************************************************************/
-char* compareServerToClient() 
+void compareServerToClient() 
 {
 
   int numClientEntries; // specifies number of songs
   char* chr = strdup(user_name2.c_str());
+  std::string musicDirName = "username_songs_client.dat";
+  char *cmusicDirName = new char[musicDirName.length() + 1];
+  strcpy(cmusicDirName, musicDirName.c_str());
+  // open database file
+  open_database_song(cmusicDirName);
   char** clientSongs = lookup_song_lists(chr, &numClientEntries); // get songs from database
   close_database_song();
   free(chr);
@@ -215,13 +211,8 @@ char* compareServerToClient()
   char* serverSha = (char*) malloc(SHA_LENGTH + 1);
 
   // string to be returned containing songs
-  char* result = (char*) malloc(BUFFSIZE);
-
-  // pointer to a location in 'result' being added to 
-  char* ptr = result;
-
-  // move pointer past location that will store the length field
-  ptr += 2;
+  char result[BUFFSIZE];
+  memset(result,0,BUFFSIZE);
 
   // number of songs currently in the array being returned
   int numResults = 0; 
@@ -229,11 +220,12 @@ char* compareServerToClient()
 
   // go through the entire server song list
   int i;
+  // cout << "server length:" << serverNumEntries << endl;
   for (i = 0; i < serverNumEntries; i++)
   {
       // retrieve the current song and sha
       strcpy(currentLine, listOfSongs[i]);
-
+      // cout << "in here" << endl;
       // get the song name only
       name = strtok(currentLine, ":");
 
@@ -253,35 +245,15 @@ char* compareServerToClient()
       		found = true;
       	}
       }
-      if(found == false) // FALSE
+      if(found == false)
       {
         // add song name : SHA to result to be returned
-        strncpy(ptr, name, SONG_LENGTH); 
-
-        ptr += SONG_LENGTH;
-
-        strncpy(ptr, serverSha, SHA_LENGTH);
-        ptr += SHA_LENGTH;
+        strncpy(result, name, strlen(result)); 
         numResults++;
       }
   }
-	//printf("numEntries %d\n", numResults);
-  // null terminate the result
-  strcat(result, "\0");
+  printf("%s",result);
 
-  // add the length field to the first 2 bytes of result
-  convertLengthToTwoBytes(result, numResults);
-
-  return result;
-}
-
-
-// prints every song and SHA combination.
-// numEntries represents number of song.
-void printLIST(char* listResponse, unsigned long numEntries)
-{
-	// print the names of the songs in the server to stdout
-	//// need to implement
 }
 
 // Constructs and sends LEAVE message to server.
@@ -302,14 +274,6 @@ void sendLEAVE(int sock)
 	    DieWithError((char*)"send() failed");
 	
 }
-
-// Prints every song names in given packet.
-// numSongs represents number of songs in packet
-// First two bytes: length field, then song name, SHA, song name, SHA,...
-void printDIFF(char* packet, unsigned long numSongs)
-{
-
-} 
 
 void sendLOGON(int sock)
 {
@@ -360,7 +324,7 @@ void sendLOGON(int sock)
 			DieWithError("recv() failed, connection closed prematurely");
 	}
 	saltArray[strlen(saltArray) - 1] = '\0';
-	printf("Salt: %s\n", saltArray);
+	//printf("Salt: %s\n", saltArray);
 
 	char empty[SHORT_BUFFSIZE];
 	if(strcmp(saltArray, empty) == 0) {
@@ -387,7 +351,7 @@ void sendLOGON(int sock)
 	strncat(logon_info, hashed_password, strlen(hashed_password));
 	strncat(logon_info, "\n", 1);
 
-	printf("%s", logon_info);
+	//printf("%s", logon_info);
 
 	// Send logon_info to server for authentication
 	ssize_t bufferLen = strlen(logon_info); 
@@ -502,7 +466,7 @@ int main (int argc, char *argv[])
 	while (user_name2 == "")
 		sendLOGON(sock);
 
-	cout << user_name2 << endl;
+	//cout << user_name2 << endl;
 
 	// open database file
 	//open_database("username_songs.dat");
@@ -523,8 +487,7 @@ int main (int argc, char *argv[])
 
 			receiveSongList(sock);
 
-			cout << "after receive response" << endl;
-			//printLIST(listResponse, length_Message);
+			// cout << "after receive response" << endl;
 
 			// read another command from user
 			printf("Enter Another Command in Small Case: ");
@@ -537,14 +500,12 @@ int main (int argc, char *argv[])
 			// update server side songs
 
 			receiveSongList(sock);
-			cout << "after receive song list" << endl;
+			// cout << "after receive song list" << endl;
 			// calculate different song files between client and server
-			char* clientSongs = compareClientToServer(); // songs that are in client but not in server
-			cout << "after compare client to server" << endl;
-			char* serverSongs = compareServerToClient(); // songs that are in server but not in client
-
-			cout << clientSongs << endl;
-			cout << serverSongs << endl;
+			compareClientToServer(); // songs that are in client but not in server
+			// cout << "after compare client to server" << endl;
+			compareServerToClient(); // songs that are in server but not in client
+			// cout << "after client song retrieved" << endl;
 
 			// wait for another command
 			printf("Enter Another Command in Small Case: ");
@@ -559,7 +520,7 @@ int main (int argc, char *argv[])
 	}
 	// send LEAVE message to server
 	sendLEAVE(sock);
-	//exit(0);
+	exit(0);
 
 }
 

@@ -36,19 +36,19 @@ unsigned long receiveResponse(int sock, char* response)
 			char buffer[BUFFSIZE];
 			ssize_t numBytesRcvd = 0;
 
-			cout << "in receive Response" << endl;
+			// cout << "in receive Response" << endl;
 			while (buffer[numBytesRcvd - 1] != '\n')		
 			{
-				cout << "inside while loop before recv" << endl;
+				// cout << "inside while loop before recv" << endl;
 				numBytesRcvd = recv(sock, buffer, BUFFSIZE-1, 0);
-				cout << "inside while loop after recv" << endl;
+				// cout << "inside while loop after recv" << endl;
 
 				//printf("numBytesRcvd: %zu\n", numBytesRcvd); // debugging
 				//printf("buffer received: %s\n", buffer); // debugging
 				if (numBytesRcvd < 0)
 					DieWithError((char*) "recv() failed");
 				else if (numBytesRcvd == 0)
-					DieWithError((char*) "recv() failed: connection closed prematurely");
+					//DieWithError((char*) "recv() failed: connection closed prematurely");
 				buffer[numBytesRcvd] = '\0'; // append null-character
 			}
 
@@ -75,27 +75,27 @@ void HandleClient(int cliSock)
 			while (buffer[numBytesRcvd - 1] != '\n')		
 			 {
 				numBytesRcvd = recv(cliSock, buffer, BUFFSIZE-1, 0);
-				printf("numBytesRcvd: %zu\n", numBytesRcvd); // debugging
-				printf("buffer received: %s\n", buffer); // debugging
+				//printf("numBytesRcvd: %zu\n", numBytesRcvd); // debugging
+				//printf("buffer received: %s\n", buffer); // debugging
 				if (numBytesRcvd < 0)
 					DieWithError((char*) "recv() failed");
 				else if (numBytesRcvd == 0)
 					DieWithError((char*) "recv() failed: connection closed prematurely");
 				buffer[numBytesRcvd] = '\0'; // append null-character
 			 }
-				cout << strlen(buffer) << endl;
-				int k;
+				// cout << strlen(buffer) << endl;
+			// 	int k;
 
-				for (k = 0; k < 4; k++)
-			{	
-				cout << endl;
-				cout << buffer[k] << endl;
-			}
+			// 	for (k = 0; k < 4; k++)
+			// {	
+			// 	cout << endl;
+			// 	cout << buffer[k] << endl;
+			// }
 
 				buffer[strlen(buffer) - 1] = '\0';
 			
-			cout << "here" << endl;
-			printf("\n%s", buffer);
+			// cout << "here" << endl;
+			//printf("\n%s", buffer);
 
 			
 			// Check the message type (first 4 bytes in the message)
@@ -108,8 +108,8 @@ void HandleClient(int cliSock)
 			}
 			typeField[4] = '\0';
 
-			printf("\nType of message received: %s\n", typeField); // debugging
-			fflush(stdout);
+			//printf("\nType of message received: %s\n", typeField); // debugging
+			//fflush(stdout);
 
 
 
@@ -124,7 +124,7 @@ void HandleClient(int cliSock)
 
 				int numEntries; // specifies number of songs
 
-				open_database_song("username_songs.dat"); // Open the database
+				//open_database_song("username_songs.dat"); // Open the database
 				char** songs = lookup_song_lists(usernameForList, &numEntries);	// get songs from database
 				close_database_song();
 
@@ -139,7 +139,7 @@ void HandleClient(int cliSock)
 				strncat(listResponse, "\n", 1); // terminate with new line 
 				
 				// send listResponse packet
-				cout << listResponse << endl;
+				// cout << listResponse << endl;
 				ssize_t numBytesSent = send(cliSock, listResponse, strlen(listResponse), 0);
 
 				if (numBytesSent < 0)
@@ -183,8 +183,8 @@ void HandleClient(int cliSock)
 				close_database();
 				delete [] cdatabase_name;
 
-				printf("\nDatabase: %s", data[0]);
-				printf("\nClient: %s", password);
+				//printf("\nDatabase: %s", data[0]);
+				//printf("\nClient: %s", password);
 				fflush(stdout);
 
 				// Authenticate client password using database entry

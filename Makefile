@@ -6,7 +6,7 @@ CLIENT_SRCS=  Project4Client.cpp
 SERVER_SRCS=  Project4Server.cpp HandleClient.cpp
 SRCS=Database.c listCommand.c
 HDRS=NetworkHeader.h WhoHeader.h
-CFLAGS= -Wall
+CFLAGS= -g -Wall
 LFLAGS= -lpthread
 CC= g++
 
